@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bóveda Financiera & Presupuesto Personal — Túnel Live Magia con K & Papel (Venezuela)</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- OVERLAY DE AUTENTICACIÓN PRIVADA (MISMA CUENTA DE MAGIA ERP) -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-badge" style="margin: 0 auto 12px;">B</div>
+        <h2>Bóveda & Presupuesto</h2>
+        <p>Gestión Personal, Separación de Emprendimientos (Magia con K / Papel) y Fiscalidad VE</p>
+      </div>
+
+      <div id="auth-alert" class="auth-alert" style="display: none;"></div>
+
+      <form id="auth-form">
+        <div class="auth-field">
+          <label for="auth-email">Correo Electrónico (Cuenta Magia Cloud)</label>
+          <input type="email" id="auth-email" placeholder="tu@correo.com" required autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label for="auth-password">Contraseña</label>
+          <div style="position: relative;">
+            <input type="password" id="auth-password" placeholder="••••••••" required autocomplete="current-password" minlength="6" style="padding-right: 40px;">
+            <button type="button" id="btn-toggle-password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 16px; padding: 4px;" title="Mostrar / Ocultar contraseña">👁️</button>
+          </div>
+        </div>
+        <button type="submit" id="auth-submit-btn" class="auth-btn">
+          <span id="auth-btn-text">Desbloquear Bóveda Privada</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <span id="auth-toggle-mode">¿Primera vez? <a href="#" id="auth-switch-link">Registrar administrador</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CABECERA SUPERIOR -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo-badge">B</div>
+      <div>
+        <h1>Presupuesto Personal &amp; Blindaje Patrimonial (USD / VES)</h1>
+        <p>Presupuesto Base Cero &bull; Separación Magia con K y Papel &bull; Cumplimiento SENIAT y Alcaldías</p>
+      </div>
+    </div>
+
+    <div class="header-badges">
+      <div id="user-session-badge" style="display: none; align-items: center; gap: 8px;">
+        <span class="badge" style="border-color: #38bdf8; color: #7dd3fc;">
+          <span>👤</span>
+          <span id="user-email-display">Gabriel</span>
+        </span>
+        <button id="btn-logout" class="sync-action-btn" style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; padding: 5px 10px;">
+          Salir
+        </button>
+      </div>
+
+      <button id="btn-cloud-sync" class="sync-action-btn" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399;" onclick="window.sincronizarTunelSupabase && window.sincronizarTunelSupabase(true)" title="Sincroniza en tiempo real las ventas e inventario de Magia con K, Papel B2B y tu Presupuesto Personal desde Supabase">
+        <span>🌉</span>
+        <span id="cloud-status-text">Túnel Magia &amp; Papel Live</span>
+      </button>
+
+      <button class="sync-action-btn" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: 1px solid #818cf8; color: #ffffff;" onclick="window.openNuevoMovimientoModal()">
+        <span>➕</span>
+        <span>Registrar Movimiento / Cruce</span>
+      </button>
+
+      <button class="sync-action-btn" style="background: rgba(239, 68, 68, 0.16); border: 1px solid #f87171; color: #fca5a5;" onclick="window.activarTab('tab-gmail')" title="Conectar con Gmail para extraer facturas y anotar gastos automáticamente">
+        <span>📧</span>
+        <span>Extraer Facturas Gmail</span>
+      </button>
+
+      <a href="https://github.com/galvarez123/Magia" target="_blank" rel="noopener" class="sync-action-btn" style="background: rgba(168, 85, 247, 0.15); border: 1px solid #a855f7; color: #d8b4fe;" title="Ir al repositorio / tablero de Magia ERP">
+        <span>🔮</span>
+        <span>Ir a Magia ERP</span>
+      </a>
+
+      <span class="badge rate" id="header-rate-badge">BCV: 875.00 | Binance: 1015.00 (+16.00%)</span>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- BARRA DE CONTEXTO PATRIMONIAL Y CONTROL CAMBIARIO -->
+    <div class="context-bar">
+      <div>
+        <div style="font-size: 11.5px; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">
+          🛡️ Selector de Bolsillo Patrimonial (Frontera Contable Activa):
+        </div>
+        <div class="entity-pills" id="entity-switcher">
+          <button type="button" class="entity-pill active" data-entity="TODOS" onclick="window.cambiarEntidadActiva('TODOS')">
+            <span>🌐</span> Vista Consolidada (3 Bolsillos)
+          </button>
+          <button type="button" class="entity-pill" data-entity="PERSONAL" onclick="window.cambiarEntidadActiva('PERSONAL')">
+            <span>👤</span> Mi Bolsillo Personal (Gabriel)
+          </button>
+          <button type="button" class="entity-pill" data-entity="MAGIA_CON_K" onclick="window.cambiarEntidadActiva('MAGIA_CON_K')">
+            <span>🔮</span> Magia con K (E-Commerce)
+          </button>
+          <button type="button" class="entity-pill" data-entity="PAPEL" onclick="window.cambiarEntidadActiva('PAPEL')">
+            <span>📄</span> Papel (Distribución B2B)
+          </button>
+        </div>
+      </div>
+
+      <div class="rate-controls-inline">
+        <div class="rate-mini-box" title="Tasa Oficial BCV (Base legal para facturas, SENIAT y pagos en Bs)">
+          <span style="color: #94a3b8;">BCV (Bs/$):</span>
+          <input type="number" id="input-tasa-bcv" value="875" step="1" onchange="window.recalcularTasasManual()">
+        </div>
+        <div class="rate-mini-box" title="Tasa USDT / Binance P2P (Valor real de reposición y blindaje patrimonial)">
+          <span style="color: #94a3b8;">USDT P2P:</span>
+          <input type="number" id="input-tasa-binance" value="1015" step="1" onchange="window.recalcularTasasManual()">
+        </div>
+        <div class="rate-mini-box" title="Moneda de Mayor Valor BCV (Usada por el Código Orgánico Tributario para calcular multas)">
+          <span style="color: #94a3b8;">TCMMV (COT):</span>
+          <input type="number" id="input-tcmmv" value="960" step="1" onchange="window.recalcularTasasManual()">
+        </div>
+        <span class="pill-tag pill-amber" id="badge-brecha-live" style="padding: 6px 12px; font-size: 12px;">
+          Brecha: +16.00%
+        </span>
+      </div>
+    </div>
+
+    <!-- TARJETAS KPI GLOBALES -->
+    <div class="kpi-grid" id="main-kpi-grid">
+      <!-- Renderizado dinámicamente por app.js -->
+    </div>
+
+    <!-- NAVEGACIÓN DE PESTAÑAS -->
+    <nav class="tabs-nav" aria-label="Secciones del Sistema de Presupuesto">
+      <button type="button" class="tab-btn active" data-tab="tab-personal" onclick="window.activarTab('tab-personal')">
+        <span>💰</span> 1. Mi Presupuesto Personal (Base Cero &amp; Sobres)
+      </button>
+      <button type="button" class="tab-btn" data-tab="tab-tunel" onclick="window.activarTab('tab-tunel')">
+        <span>🌉</span> 2. Túnel Emprendimientos (Magia con K &amp; Papel) &amp; Cruces
+      </button>
+      <button type="button" class="tab-btn" data-tab="tab-fiscal" onclick="window.activarTab('tab-fiscal')">
+        <span>⚖️</span> 3. Legalidad y Bóveda Fiscal Venezuela (SENIAT / Alcaldía)
+      </button>
+      <button type="button" class="tab-btn" data-tab="tab-libro" onclick="window.activarTab('tab-libro')">
+        <span>📒</span> 4. Billeteras Separadas &amp; Libro Mayor Bimonetario
+      </button>
+      <button type="button" class="tab-btn" data-tab="tab-gmail" onclick="window.activarTab('tab-gmail')">
+        <span>📧</span> 5. Extractor de Facturas Gmail (Auto-Gastos)
+      </button>
+    </nav>
+
+    <!-- ====================================================================== -->
+    <!-- PESTAÑA 1: GESTIÓN DE PRESUPUESTO PERSONAL (BASE CERO & SOBRES)        -->
+    <!-- ====================================================================== -->
+    <section id="tab-personal" class="tab-content active">
+      <div class="panel" style="border-color: rgba(16, 185, 129, 0.4); background: linear-gradient(180deg, rgba(16, 185, 129, 0.06) 0%, var(--bg-card) 100%);">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">👤 Tablero Maestro de Presupuesto Personal (Metodología Base Cero)</div>
+            <div class="panel-subtitle">
+              Tu ingreso personal proviene del <strong>Sueldo de Fundador Fijo</strong> asignado desde <strong>Magia con K ($350)</strong> + <strong>Papel ($250)</strong> = <strong>$600.00 USD/mes</strong>. Cada dólar tiene una misión asignada antes de gastar.
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <span class="pill-tag pill-green" id="badge-ecuacion-base-cero">Base Cero: $0.00 sin asignar</span>
+            <button type="button" class="sync-action-btn" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399;" onclick="window.openNuevoMovimientoModal('GASTO_PERSONAL')">
+              ➕ Registrar Gasto Personal
+            </button>
+            <button type="button" class="sync-action-btn" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #7dd3fc;" onclick="window.openNuevoMovimientoModal('APORTE_SOBRE')">
+              🏦 Aportar a Sobre / Fondo Paz
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de Salud Personal y Pacing -->
+        <div id="personal-health-strip" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 18px;">
+          <!-- Inyectado por app.js -->
+        </div>
+
+        <!-- Los 4 Bloques del Presupuesto Personal -->
+        <div class="grid-2" id="personal-budget-blocks">
+          <!-- Inyectado por app.js -->
+        </div>
+      </div>
+
+      <!-- Gráficos de Presupuesto Personal -->
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">📊 Distribución Base Cero por Bloques Vitales</div>
+              <div class="panel-subtitle">Equilibrio entre Necesidades (Bloque A), Sobres Anuales (B), Estilo de Vida (C) y Futuro (D)</div>
+            </div>
+          </div>
+          <div style="height: 270px; position: relative;">
+            <canvas id="chart-bloques-personal"></canvas>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">🚦 Semáforo de Ejecución Mensual por Categoría (USD)</div>
+              <div class="panel-subtitle">Presupuesto Mensual vs. Gasto Acumulado del Mes</div>
+            </div>
+          </div>
+          <div style="height: 270px; position: relative;">
+            <canvas id="chart-ejecucion-categorias"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================== -->
+    <!-- PESTAÑA 2: TÚNEL EN VIVO EMPRENDIMIENTOS (MAGIA CON K & PAPEL)         -->
+    <!-- ====================================================================== -->
+    <section id="tab-tunel" class="tab-content">
+      <div class="panel" style="border-color: rgba(168, 85, 247, 0.45);">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">🌉 Túnel en Tiempo Real: Magia con K &amp; Papel B2B &rarr; Finanzas Personales</div>
+            <div class="panel-subtitle">
+              Lectura directa desde las tablas operativas de Supabase (<code>erp_articulos</code>, <code>erp_ventas_transacciones</code>, <code>erp_papel_inventario</code>, <code>erp_papel_ventas</code> y <code>erp_papel_pagos</code>). Separa el capital de reposición y los impuestos antes de transferir tu Sueldo de Fundador.
+            </div>
+          </div>
+          <button type="button" class="sync-action-btn" style="background: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7; color: #e9d5ff;" onclick="window.sincronizarTunelSupabase(true)">
+            🔄 Refrescar Datos del Túnel Ahora
+          </button>
+        </div>
+
+        <!-- Tarjetas Comparativas de los 2 Emprendimientos + Bolsillo Personal -->
+        <div class="grid-3" id="tunel-entities-cards">
+          <!-- Inyectado por app.js -->
+        </div>
+      </div>
+
+      <!-- MATRIZ DE CONCILIACIÓN DE BOLSILLOS CRUZADOS (CUENTA PUENTE SOCIO <-> EMPRESA) -->
+      <div class="panel" style="border-color: rgba(245, 158, 11, 0.45);">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">🤝 Cuenta Puente y Auditor de Gastos Cruzados (Socio &harr; Emprendimientos)</div>
+            <div class="panel-subtitle">
+              ¿Pagaste un flete de <strong>Papel</strong> o bolsas de <strong>Magia con K</strong> con tu Pago Móvil personal? ¿O pagaste un almuerzo personal con dinero de la caja de Papel? Aquí se concilia sin distorsionar tus márgenes ni tu presupuesto personal.
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span class="pill-tag pill-amber" id="badge-balance-puente">Balance Neto: Calculando...</span>
+            <button type="button" class="sync-action-btn" style="background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fbbf24;" onclick="window.openNuevoMovimientoModal('GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO')">
+              ⚡ Registrar Pago con Bolsillo Cruzado
+            </button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Emprendimiento</th>
+                <th>Dirección del Cruce</th>
+                <th>Concepto / Motivo</th>
+                <th>Moneda Pago</th>
+                <th>Monto Real (USD)</th>
+                <th>Impacto Contable</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-cruces-patrimoniales">
+              <!-- Inyectado por app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================== -->
+    <!-- PESTAÑA 3: LEGALIDAD Y BÓVEDA FISCAL VENEZUELA (SENIAT / ALCALDÍA)     -->
+    <!-- ====================================================================== -->
+    <section id="tab-fiscal" class="tab-content">
+      <div class="panel" style="border-color: rgba(56, 189, 248, 0.45);">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">⚖️ Bóveda Fiscal Intocable y Cumplimiento Tributario Venezuela</div>
+            <div class="panel-subtitle">
+              El IVA cobrado y el porcentaje de Alcaldía (Ingresos Brutos) <strong>no son ganancia ni sueldo</strong>. El sistema los blinda en la Bóveda Fiscal para evitar multas indexadas al <strong>TCMMV del BCV</strong> según el Código Orgánico Tributario (COT).
+            </div>
+          </div>
+          <span class="pill-tag pill-blue" id="badge-boveda-fiscal-total">Bóveda Reservada: $0.00 USD</span>
+        </div>
+
+        <!-- Calculadoras Fiscales Interactivas Venezolanas -->
+        <div class="grid-2">
+          <!-- Calculadora 1: Escudo Fiscal ISLR Persona Natural (774 UT vs Desgravámenes Detallados) -->
+          <div class="budget-block-card" style="border-color: rgba(99, 102, 241, 0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <strong style="color: #f8fafc; font-size: 14.5px;">🧾 Escudo Fiscal ISLR Persona Natural (Gabriel)</strong>
+              <span class="pill-tag pill-purple">Plazo: 31 Marzo</span>
+            </div>
+            <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
+              En Venezuela puedes elegir entre el <strong>Desgravamen Único (774 UT)</strong> o los <strong>Desgravámenes Detallados (Art. 59 LISLR)</strong>: Educación, Seguro HCM, Gastos Médicos/Odontológicos y Vivienda Principal soportados con Factura Fiscal SENIAT.
+            </p>
+            <div id="islr-personal-summary" style="background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 12.5px;">
+              <!-- Inyectado por app.js -->
+            </div>
+          </div>
+
+          <!-- Calculadora 2: Optimizador Cambiario BCV vs USDT + Ahorro de IGTF (3%) -->
+          <div class="budget-block-card" style="border-color: rgba(16, 185, 129, 0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <strong style="color: #f8fafc; font-size: 14.5px;">💱 Calculadora de Ahorro Cambiario (VES a BCV vs. Divisas + IGTF 3%)</strong>
+              <span class="pill-tag pill-green">Arbitraje Legal</span>
+            </div>
+            <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">
+              Simula cuánto ahorras en USDT reales cuando pagas una factura nacional (Supermercado, Condominio, Proveedor o Servicio) en <strong>Bolívares a Tasa BCV</strong> en lugar de entregar divisas con recargo de <strong>3% IGTF</strong>:
+            </p>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+              <div style="flex: 1;">
+                <label style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 4px;">Monto Factura a Tasa BCV ($ USD):</label>
+                <input type="number" id="sim-monto-factura" class="form-control" value="100" min="1" step="5" oninput="window.actualizarSimuladorCambiario()">
+              </div>
+              <div style="flex: 1;">
+                <label style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 4px;">¿Aplica 3% IGTF en Divisas?</label>
+                <select id="sim-aplica-igtf" class="form-control" onchange="window.actualizarSimuladorCambiario()">
+                  <option value="si" selected>Sí (+3% IGTF en USD)</option>
+                  <option value="no">No (0% IGTF)</option>
+                </select>
+              </div>
+            </div>
+            <div id="sim-cambiario-output" style="background: #0f172a; border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 10px; padding: 11px; font-size: 12.5px;">
+              <!-- Inyectado por app.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Compromisos Fiscales y Parafiscales (SENIAT, Alcaldía, RNE, LPP) -->
+        <div style="margin-top: 10px;">
+          <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 10px; color: #f8fafc;">
+            🏛️ Matriz de Obligaciones Legales y Provisiones Activas (Personal, Magia con K y Papel)
+          </h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Entidad</th>
+                  <th>Organismo</th>
+                  <th>Tributo / Compromiso Legal</th>
+                  <th>Frecuencia &amp; Vencimiento</th>
+                  <th>Alícuota / Base Legal</th>
+                  <th>Provisión en Bóveda</th>
+                  <th>Meta Periodo</th>
+                  <th>Riesgo Sanción COT (TCMMV)</th>
+                  <th>Estado</th>
+                  <th>Ajustar</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-obligaciones-fiscales">
+                <!-- Inyectado por app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================== -->
+    <!-- PESTAÑA 4: BILLETERAS SEPARADAS Y LIBRO MAYOR MULTIMONEDA              -->
+    <!-- ====================================================================== -->
+    <section id="tab-libro" class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">🏦 Mapa de Billeteras y Cuentas Separadas por Entidad</div>
+            <div class="panel-subtitle">
+              Regla Anti-Devaluación: Mantén en cuentas en <code>VES</code> únicamente la liquidez para los próximos 3 a 5 días de pagos programados; el resto resguárdalo en <code>USDT</code> / <code>USD</code>.
+            </div>
+          </div>
+        </div>
+        <div class="grid-3" id="wallets-grid-container">
+          <!-- Inyectado por app.js -->
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">📒 Libro Mayor Bimonetario (Transacciones, Facturas Fiscales y Ahorro Cambiario)</div>
+            <div class="panel-subtitle">
+              Cada registro guarda la moneda origen, tasa BCV legal, tasa USDT de reposición, ahorro cambiario obtenido y soporte fiscal SENIAT.
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="sync-action-btn" style="background: rgba(99, 102, 241, 0.2); border: 1px solid #6366f1; color: #a5b4fc;" onclick="window.openNuevoMovimientoModal()">
+              ➕ Nuevo Asiento Contable
+            </button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Bolsillo / Entidad</th>
+                <th>Tipo de Movimiento</th>
+                <th>Concepto &amp; Categoría</th>
+                <th>Monto Origen</th>
+                <th>Equiv. BCV ($ USD)</th>
+                <th>Costo Real USDT ($)</th>
+                <th>Ahorro Cambiario</th>
+                <th>Soporte Fiscal / Cruce</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-transacciones">
+              <!-- Inyectado por app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================== -->
+    <!-- PESTAÑA 5: EXTRACTOR DE FACTURAS Y COMPROBANTES GMAIL -> GASTOS        -->
+    <!-- ====================================================================== -->
+    <section id="tab-gmail" class="tab-content">
+      <div class="panel" style="border-color: rgba(239, 68, 68, 0.45);">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">📧 Conector Inteligente con Gmail (<code>galvarezuc@gmail.com</code>) &rarr; Anotación Automática de Gastos</div>
+            <div class="panel-subtitle">
+              Extrae facturas fiscales SENIAT, recibos de servicios (Fibex, Corpoelec, Condominio), cargos de Mercado Libre, compras en Farmatodo/Salud y comprobantes bancarios desde tu correo y los anota directamente en <code>fin_transacciones</code> y en tus sobres de presupuesto.
+            </div>
+          </div>
+          <button type="button" class="sync-action-btn" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399;" onclick="window.sincronizarGmailEnVivo()">
+            🔄 Escanear Mi Bandeja de Gmail Ahora
+          </button>
+        </div>
+
+        <div id="gmail-sync-status" style="background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px; color: #cbd5e1;">
+          🟢 <strong>Estado del Extractor Gmail:</strong> Conectado a la tabla <code>fin_gmail_facturas_bandeja</code> y al RPC <code>rpc_ingerir_facturas_gmail</code> en Supabase.
+        </div>
+
+        <div class="grid-2">
+          <!-- Columna 1: Conexión Automática API / Google Apps Script 24/7 -->
+          <div class="budget-block-card" style="border-top: 3px solid #ef4444;">
+            <h3 style="font-size: 15px; font-weight: 800; color: #f8fafc; margin-bottom: 6px;">
+              ⚡ Modo 1: Conexión Directa a tu Bandeja Gmail (24/7 o En Vivo)
+            </h3>
+            <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
+              Conecta mediante el script nativo de tu cuenta Google (<code>google_apps_script_gmail_facturas.js</code>, igual que en Magia y Papel) o ingresa un Token OAuth de Gmail API para barrer tus últimos 30 días de correos:
+            </p>
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label for="gmail-gas-webhook">URL Web App de tu Google Apps Script (Lectura 24/7 sin expiración):</label>
+              <input type="url" id="gmail-gas-webhook" class="form-control" placeholder="https://script.google.com/macros/s/.../exec">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="gmail-oauth-token">O Token OAuth2 Directo de Gmail API (<code>gmail.readonly</code>):</label>
+              <input type="password" id="gmail-oauth-token" class="form-control" placeholder="ya29.a0AfH6SM...">
+            </div>
+            <button type="button" class="btn-primary" onclick="window.sincronizarGmailEnVivo()">
+              🚀 Ejecutar Barrido de Facturas en Gmail y Anotar Gastos
+            </button>
+          </div>
+
+          <!-- Columna 2: Escáner Instantáneo de Correo / Factura Pegada -->
+          <div class="budget-block-card" style="border-top: 3px solid #10b981;">
+            <h3 style="font-size: 15px; font-weight: 800; color: #f8fafc; margin-bottom: 6px;">
+              🧾 Modo 2: Escáner Instantáneo de Factura o Correo Recibido
+            </h3>
+            <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">
+              Pega el texto de cualquier correo de facturación, Pago Móvil o recibo que te haya llegado a Gmail. El motor detecta RIF, N° Factura, Moneda (<code>Bs</code> / <code>USD</code> / <code>USDT</code>), IVA, Entidad (Personal, Magia con K o Papel) y anota el gasto al instante:
+            </p>
+            <form onsubmit="window.procesarCorreoPegadoEnVivo(event)">
+              <div class="form-grid" style="margin-bottom: 8px;">
+                <input type="text" id="paste-gmail-from" class="form-control" placeholder="Remitente (ej: facturacion@fibex.com)">
+                <input type="text" id="paste-gmail-subject" class="form-control" placeholder="Asunto (ej: Factura Fiscal #9910)">
+              </div>
+              <textarea id="paste-gmail-body" class="form-control" rows="3" style="margin-bottom: 10px;" placeholder="Pega aquí el cuerpo del correo o factura (ej: Farmatodo RIF J-00020200-1 Factura Nro 44120 Total pagado Bs. 18.500,00)..."></textarea>
+              <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                ✨ Extraer Datos Fiscales y Anotar Gasto en Supabase
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Bandeja de Facturas Extraídas de Gmail y Anotadas en Gastos -->
+        <div style="margin-top: 10px;">
+          <h3 style="font-size: 15px; font-weight: 800; color: #f8fafc; margin-bottom: 10px;">
+            📥 Historial de Facturas Extraídas de Gmail y Anotadas en tus Gastos
+          </h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha Correo</th>
+                  <th>Asunto &amp; Remitente Gmail</th>
+                  <th>RIF &amp; N° Factura</th>
+                  <th>Bolsillo &amp; Sobre Asignado</th>
+                  <th>Monto Factura</th>
+                  <th>Equiv. BCV ($)</th>
+                  <th>Costo Real USDT</th>
+                  <th>Estado en Presupuesto</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-gmail-facturas">
+                <!-- Inyectado por gmail_connector.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- MODAL PARA REGISTRAR MOVIMIENTO / GASTO PERSONAL / CRUCE PATRIMONIAL -->
+  <div class="modal-overlay" id="modal-nuevo-movimiento" role="dialog" aria-modal="true" aria-labelledby="modal-mov-title">
+    <div class="modal-card">
+      <button type="button" class="modal-close" onclick="window.closeNuevoMovimientoModal()">&times;</button>
+      <h2 id="modal-mov-title" style="font-size: 18px; font-weight: 800; color: #f8fafc; margin-bottom: 4px;">
+        ➕ Registrar Movimiento Bimonetario o Cruce Patrimonial
+      </h2>
+      <p style="font-size: 12.5px; color: #94a3b8; margin-bottom: 16px;">
+        Calcula automáticamente la equivalencia a Tasa BCV, el costo real en USDT, el ahorro cambiario y genera asientos de Cuenta Puente si usaste un bolsillo cruzado.
+      </p>
+
+      <form id="form-nuevo-movimiento" onsubmit="window.handleGuardarMovimiento(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="mov-fecha">Fecha de Operación</label>
+            <input type="date" id="mov-fecha" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="mov-tipo">Naturaleza del Movimiento</label>
+            <select id="mov-tipo" class="form-control" onchange="window.actualizarCamposModalMovimiento()">
+              <option value="GASTO_PERSONAL">🛒 Gasto Personal (Consume mi Presupuesto)</option>
+              <option value="APORTE_SOBRE">🏦 Aporte a Sobre Personal / Fondo de Paz</option>
+              <option value="SUELDO_FUNDADOR">💵 Cobro de Sueldo de Fundador (Negocio &rarr; Personal)</option>
+              <option value="GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO">⚡ Bolsillo Cruzado: Pagué algo del Negocio con mi dinero Personal</option>
+              <option value="GASTO_CRUZADO_NEGOCIO_PAGA_SOCIO">⚠️ Bolsillo Cruzado: Pagué algo Personal con dinero del Negocio</option>
+              <option value="GASTO_OPERATIVO_NEGOCIO">📦 Gasto Operativo Propio del Emprendimiento</option>
+              <option value="PAGO_IMPUESTO">🏛️ Pago de Impuesto (SENIAT / Alcaldía / Parafiscal)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="mov-entidad">Entidad a la que pertenece el Gasto/Ingreso</label>
+            <select id="mov-entidad" class="form-control">
+              <option value="PERSONAL">👤 Finanzas Personales (Gabriel)</option>
+              <option value="MAGIA_CON_K">🔮 Magia con K (E-Commerce)</option>
+              <option value="PAPEL">📄 Papel (Distribución B2B)</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="group-mov-categoria">
+            <label for="mov-categoria">Categoría / Sobre de Presupuesto Personal</label>
+            <select id="mov-categoria" class="form-control">
+              <!-- Llenado dinámicamente -->
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" id="group-cruce-entidad" style="display: none; margin-bottom: 14px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); padding: 12px; border-radius: 10px;">
+          <label for="mov-entidad-cruce" style="color: #fbbf24;">🤝 ¿Cuál Emprendimiento participa en el Cruce Patrimonial?</label>
+          <select id="mov-entidad-cruce" class="form-control">
+            <option value="MAGIA_CON_K">🔮 Magia con K (E-Commerce &amp; Mazos)</option>
+            <option value="PAPEL">📄 Papel (Distribución B2B)</option>
+          </select>
+          <div style="font-size: 11.5px; color: #cbd5e1; margin-top: 6px;">
+            Se creará automáticamente el asiento de conciliación en la <strong>Cuenta Puente Socio &harr; Empresa</strong> para su reembolso.
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="mov-concepto">Concepto / Descripción Detallada</label>
+          <input type="text" id="mov-concepto" class="form-control" placeholder="Ej: Compra mercado quincena / Pago embalaje MRW / Consulta médica..." required>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="mov-moneda">Moneda Utilizada en el Pago</label>
+            <select id="mov-moneda" class="form-control" onchange="window.previsualizarConversionModal()">
+              <option value="VES">🇻🇪 Bolívares (VES - Pago Móvil / Punto / Transferencia)</option>
+              <option value="USDT">💎 USDT (Binance Pay / Cripto)</option>
+              <option value="USD_CASH">💵 Dólares Efectivo (USD Cash)</option>
+              <option value="USD_ZELLE">🏦 Zelle / Divisas Internacional</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="mov-monto">Monto Exacto Pagado (en Moneda Origen)</label>
+            <input type="number" id="mov-monto" class="form-control" step="0.01" min="0.01" placeholder="Ej: 35000 o 45.00" required oninput="window.previsualizarConversionModal()">
+          </div>
+        </div>
+
+        <!-- Previsualización en Vivo del Motor Bimonetario -->
+        <div id="mov-preview-bimonetario" style="background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 14px; font-size: 12.5px;">
+          Ingresa un monto para calcular su equivalencia a Tasa BCV y en USDT reales.
+        </div>
+
+        <!-- Checks Fiscales y de Control Personal -->
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; background: rgba(15, 23, 42, 0.55); padding: 12px; border-radius: 10px; border: 1px solid var(--border);">
+          <label style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; cursor: pointer;">
+            <input type="checkbox" id="mov-factura-fiscal">
+            <span>🧾 Tiene Factura Fiscal Legal SENIAT</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; cursor: pointer;">
+            <input type="checkbox" id="mov-desgravamen-islr">
+            <span>🏥 Aplica como Desgravamen ISLR Personal (Salud/HCM/Educación/Vivienda)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; cursor: pointer;">
+            <input type="checkbox" id="mov-gasto-hormiga">
+            <span>🐜 Clasificar como Gasto Hormiga</span>
+          </label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="sync-action-btn" style="background: rgba(148, 163, 184, 0.15); border: 1px solid #475569; color: #f1f5f9;" onclick="window.closeNuevoMovimientoModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" style="width: auto; padding: 10px 22px;">
+            💾 Guardar en Supabase Cloud
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Contenedor de Notificaciones Toast -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- SDK de Supabase y Módulos de la Aplicación -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script src="supabase_adapter.js"></script>
+  <script src="gmail_connector.js"></script>
+  <script src="auth_controller.js"></script>
+</body>
+</html>

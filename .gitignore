@@ -1,0 +1,8 @@
+node_modules/
+.vercel/
+.env
+*.bak
+*.tmp
+log_subida.txt
+cloudflared.exe
+
