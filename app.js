@@ -833,9 +833,14 @@
             <div style="font-size:20px; font-weight:800; color:${w.es_intocable_fiscal ? "#38bdf8" : "#34d399"};">
               ${esVes ? fmtVES(saldo) : fmtUSD(saldo)}
             </div>
-            <div style="font-size:11.5px; color:#94a3b8; margin-top:2px;">
-              Poder adquisitivo real: <strong>${fmtUSD(equivUsdt)} USDT</strong>
-              ${w.es_intocable_fiscal ? " &bull; 🔒 Dinero reservado para impuestos" : ""}
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+              <div style="font-size:11.5px; color:#94a3b8;">
+                Poder adquisitivo real: <strong>${fmtUSD(equivUsdt)} USDT</strong>
+                ${w.es_intocable_fiscal ? " &bull; 🔒 Fiscal" : ""}
+              </div>
+              <button type="button" style="background:none; border:1px solid #475569; color:#cbd5e1; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer;" onclick="window.editarSaldoBilleteraPrompt('${w.nombre.replace(/'/g, "\\'")}')">
+                ✏️ Llenar Saldo
+              </button>
             </div>
             ${alertaDevaluacion}
           </div>
@@ -1190,6 +1195,18 @@
     }
   }
 
+  function editarSaldoBilleteraPrompt(nombreBilletera) {
+    const w = window.FINANZAS_STATE.billeteras.find(b => b.nombre === nombreBilletera);
+    if (!w) return;
+    const nuevo = prompt(`Ingresa el saldo actual en ${w.moneda} para "${w.nombre}":`, String(w.saldo_origen || 0));
+    if (nuevo === null) return;
+    const val = Number(nuevo);
+    if (isNaN(val) || val < 0) return;
+    if (typeof window.actualizarSaldoBilleteraCloud === "function") {
+      window.actualizarSaldoBilleteraCloud(nombreBilletera, val);
+    }
+  }
+
   function renderAllFinanzas() {
     const resumen = calcularResumenGlobal();
     renderMainKPIs(resumen);
@@ -1217,6 +1234,7 @@
   window.registrarPagoSueldoRapido = registrarPagoSueldoRapido;
   window.editarTopeCategoriaPrompt = editarTopeCategoriaPrompt;
   window.editarProvisionFiscalPrompt = editarProvisionFiscalPrompt;
+  window.editarSaldoBilleteraPrompt = editarSaldoBilleteraPrompt;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", renderAllFinanzas);

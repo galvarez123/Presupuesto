@@ -290,11 +290,41 @@
     }
   }
 
+  // 6. Actualizar Saldo de Billetera / Efectivo en la Nube
+  async function actualizarSaldoBilleteraCloud(nombreBilletera, nuevoSaldo) {
+    const client = getClient();
+    const state = window.FINANZAS_STATE;
+    const w = state.billeteras.find(b => b.nombre === nombreBilletera);
+    if (!w) return;
+
+    w.saldo_origen = Number(nuevoSaldo);
+    if (typeof window.renderAllFinanzas === "function") {
+      window.renderAllFinanzas();
+    }
+
+    if (!client) return;
+
+    try {
+      const { error } = await client
+        .from("fin_billeteras")
+        .update({
+          saldo_origen: w.saldo_origen,
+          updated_at: new Date().toISOString()
+        })
+        .eq("nombre", nombreBilletera);
+      if (error) throw error;
+      showToast(`🏦 Saldo de "${w.nombre}" actualizado en Supabase (${w.moneda === "VES" ? "Bs " : "$"}${w.saldo_origen.toFixed(2)}).`, true);
+    } catch (err) {
+      console.error("Error actualizando saldo de billetera:", err);
+    }
+  }
+
   window.sincronizarTunelSupabase = sincronizarTunelSupabase;
   window.guardarTransaccionCloud = guardarTransaccionCloud;
   window.liquidarCrucePatrimonialCloud = liquidarCrucePatrimonialCloud;
   window.actualizarTopeCategoriaCloud = actualizarTopeCategoriaCloud;
   window.actualizarProvisionFiscalCloud = actualizarProvisionFiscalCloud;
+  window.actualizarSaldoBilleteraCloud = actualizarSaldoBilleteraCloud;
   window.showToast = showToast;
 
   if (document.readyState === "loading") {
