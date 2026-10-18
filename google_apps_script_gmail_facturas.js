@@ -157,7 +157,9 @@ function analizarTextoFacturaVenezolana(asunto, remitente, cuerpo) {
     textoLower.includes("mazo") ||
     textoLower.includes("tarot") ||
     textoLower.includes("magia") ||
-    textoLower.includes("comisión por venta")
+    textoLower.includes("comisión por venta") ||
+    textoLower.includes("alibaba.com") ||
+    textoLower.includes("facebk")
   ) {
     entidad = "MAGIA_CON_K";
     categoria = "";
@@ -172,89 +174,65 @@ function analizarTextoFacturaVenezolana(asunto, remitente, cuerpo) {
     entidad = "PAPEL";
     categoria = "";
   } else if (
+    textoLower.includes("colegio") ||
+    textoLower.includes("escuela") ||
+    textoLower.includes("mensualidad") ||
+    textoLower.includes("inscripci") ||
+    textoLower.includes("útiles") ||
+    textoLower.includes("utiles")
+  ) {
+    entidad = "PERSONAL";
+    categoria = "PER_ESCUELA_HIJA";
+    aplicaDesgravamen = true;
+  } else if (
+    textoLower.includes("farmatodo") ||
+    textoLower.includes("condominio") ||
+    textoLower.includes("corpoelec") ||
+    textoLower.includes("hidro") ||
+    textoLower.includes("alquiler") ||
+    textoLower.includes("electricidad") ||
+    textoLower.includes("fibex") ||
+    textoLower.includes("netuno") ||
+    textoLower.includes("inter") ||
+    textoLower.includes("cantv")
+  ) {
+    entidad = "PERSONAL";
+    categoria = "PER_CASA";
+    aplicaDesgravamen = textoLower.includes("condominio") || textoLower.includes("corpoelec");
+  } else if (
+    textoLower.includes("banesco") && textoLower.includes("punto de venta")
+  ) {
+    entidad = "PERSONAL";
+    categoria = "PER_MERCADO";
+  } else if (
     textoLower.includes("clínica") ||
     textoLower.includes("clinica") ||
     textoLower.includes("hospital") ||
     textoLower.includes("odont") ||
     textoLower.includes("laboratorio") ||
-    textoLower.includes("farmatodo") ||
     textoLower.includes("locatel") ||
     textoLower.includes("farmacia") ||
-    textoLower.includes("médico") ||
-    textoLower.includes("medico")
-  ) {
-    entidad = "PERSONAL";
-    categoria = "PER_SALUD_BASE";
-    aplicaDesgravamen = true;
-  } else if (
     textoLower.includes("seguro") ||
-    textoLower.includes("póliza") ||
-    textoLower.includes("poliza") ||
     textoLower.includes("hcm") ||
-    textoLower.includes("mercantil seguros") ||
-    textoLower.includes("mapfre") ||
-    textoLower.includes("caracas")
+    textoLower.includes("caucho") ||
+    textoLower.includes("taller")
   ) {
     entidad = "PERSONAL";
-    categoria = "SOBRE_HCM";
-    aplicaDesgravamen = true;
-  } else if (
-    textoLower.includes("fibex") ||
-    textoLower.includes("netuno") ||
-    textoLower.includes("inter") ||
-    textoLower.includes("cantv") ||
-    textoLower.includes("digitel") ||
-    textoLower.includes("movistar") ||
-    textoLower.includes("internet")
-  ) {
-    entidad = "PERSONAL";
-    categoria = "PER_INTERNET";
-  } else if (
-    textoLower.includes("condominio") ||
-    textoLower.includes("corpoelec") ||
-    textoLower.includes("hidro") ||
-    textoLower.includes("alquiler") ||
-    textoLower.includes("electricidad")
-  ) {
-    entidad = "PERSONAL";
-    categoria = "PER_VIVIENDA";
+    categoria = "SOBRE_SALUD_VEHICULO";
     aplicaDesgravamen = true;
   } else if (
     textoLower.includes("netflix") ||
     textoLower.includes("spotify") ||
     textoLower.includes("youtube") ||
-    textoLower.includes("apple") ||
-    textoLower.includes("google play") ||
-    textoLower.includes("disney")
-  ) {
-    entidad = "PERSONAL";
-    categoria = "PER_SUSCRIPCIONES";
-  } else if (
     textoLower.includes("pedidosya") ||
     textoLower.includes("yummy") ||
     textoLower.includes("restaurante") ||
     textoLower.includes("café") ||
     textoLower.includes("pizza") ||
-    textoLower.includes("burger")
+    textoLower.includes("sambil")
   ) {
     entidad = "PERSONAL";
-    categoria = "PER_RESTAURANTES";
-  } else if (
-    textoLower.includes("caucho") ||
-    textoLower.includes("batería") ||
-    textoLower.includes("taller") ||
-    textoLower.includes("repuesto") ||
-    textoLower.includes("aceite")
-  ) {
-    entidad = "PERSONAL";
-    categoria = "SOBRE_VEHICULO";
-  } else if (
-    textoLower.includes("gasolina") ||
-    textoLower.includes("combustible") ||
-    textoLower.includes("ridery")
-  ) {
-    entidad = "PERSONAL";
-    categoria = "PER_TRANSPORTE";
+    categoria = "PER_ESPARCIMIENTO";
   }
 
   return {

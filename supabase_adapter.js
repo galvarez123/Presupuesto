@@ -75,7 +75,7 @@
         state.billeteras = resBilleteras.data;
       }
       if (resCategorias.data && resCategorias.data.length > 0) {
-        state.categorias = resCategorias.data;
+        state.categorias = resCategorias.data.filter(c => c.activa !== false);
       }
       if (resObligaciones.data && resObligaciones.data.length > 0) {
         state.obligacionesFiscales = resObligaciones.data;
@@ -84,7 +84,7 @@
         state.crucesPatrimoniales = resCruces.data;
       }
       if (resTransacciones.data && resTransacciones.data.length > 0) {
-        state.transacciones = resTransacciones.data;
+        state.transacciones = resTransacciones.data.filter(t => Number(t.monto_usd_bcv) > 0 || Number(t.monto_usd_real) > 0);
       }
 
       if (badgeText) {

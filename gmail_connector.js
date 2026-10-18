@@ -50,36 +50,30 @@
     let aplicaDesgravamen = false;
     const tieneFacturaFiscal = Boolean(rifDetectado) || textoLower.includes("seniat") || textoLower.includes("factura") || textoLower.includes("iva");
 
-    if (textoLower.includes("mercadolibre") || textoLower.includes("mercado libre") || textoLower.includes("mazo") || textoLower.includes("tarot") || textoLower.includes("magia")) {
+    if (textoLower.includes("mercadolibre") || textoLower.includes("mercado libre") || textoLower.includes("mazo") || textoLower.includes("tarot") || textoLower.includes("magia") || textoLower.includes("alibaba.com") || textoLower.includes("facebk")) {
       entidad = "MAGIA_CON_K";
       categoria = "";
     } else if (textoLower.includes("papel") || textoLower.includes("adhesivo") || textoLower.includes("fotográfico") || textoLower.includes("rollo") || textoLower.includes("luisalba")) {
       entidad = "PAPEL";
       categoria = "";
-    } else if (textoLower.includes("clínica") || textoLower.includes("clinica") || textoLower.includes("odont") || textoLower.includes("farmatodo") || textoLower.includes("locatel") || textoLower.includes("farmacia") || textoLower.includes("laboratorio")) {
+    } else if (textoLower.includes("colegio") || textoLower.includes("escuela") || textoLower.includes("mensualidad") || textoLower.includes("inscripci") || textoLower.includes("útiles") || textoLower.includes("utiles")) {
       entidad = "PERSONAL";
-      categoria = "PER_SALUD_BASE";
+      categoria = "PER_ESCUELA_HIJA";
       aplicaDesgravamen = true;
-    } else if (textoLower.includes("seguro") || textoLower.includes("póliza") || textoLower.includes("poliza") || textoLower.includes("hcm")) {
+    } else if (textoLower.includes("farmatodo") || textoLower.includes("condominio") || textoLower.includes("corpoelec") || textoLower.includes("hidro") || textoLower.includes("electricidad") || textoLower.includes("fibex") || textoLower.includes("netuno") || textoLower.includes("inter")) {
       entidad = "PERSONAL";
-      categoria = "SOBRE_HCM";
-      aplicaDesgravamen = true;
-    } else if (textoLower.includes("fibex") || textoLower.includes("netuno") || textoLower.includes("inter") || textoLower.includes("digitel") || textoLower.includes("movistar") || textoLower.includes("internet")) {
+      categoria = "PER_CASA";
+      aplicaDesgravamen = textoLower.includes("condominio") || textoLower.includes("corpoelec");
+    } else if (textoLower.includes("clínica") || textoLower.includes("clinica") || textoLower.includes("odont") || textoLower.includes("locatel") || textoLower.includes("farmacia") || textoLower.includes("laboratorio") || textoLower.includes("seguro") || textoLower.includes("hcm") || textoLower.includes("caucho") || textoLower.includes("taller")) {
       entidad = "PERSONAL";
-      categoria = "PER_INTERNET";
-    } else if (textoLower.includes("condominio") || textoLower.includes("corpoelec") || textoLower.includes("hidro") || textoLower.includes("electricidad")) {
+      categoria = "SOBRE_SALUD_VEHICULO";
+      aplicaDesgravamen = !textoLower.includes("caucho") && !textoLower.includes("taller");
+    } else if (textoLower.includes("banesco") && textoLower.includes("punto de venta")) {
       entidad = "PERSONAL";
-      categoria = "PER_VIVIENDA";
-      aplicaDesgravamen = true;
-    } else if (textoLower.includes("netflix") || textoLower.includes("spotify") || textoLower.includes("youtube") || textoLower.includes("streaming")) {
+      categoria = "PER_MERCADO";
+    } else if (textoLower.includes("netflix") || textoLower.includes("spotify") || textoLower.includes("youtube") || textoLower.includes("streaming") || textoLower.includes("pedidosya") || textoLower.includes("yummy") || textoLower.includes("restaurante") || textoLower.includes("pizza") || textoLower.includes("café") || textoLower.includes("sambil") || textoLower.includes("cine")) {
       entidad = "PERSONAL";
-      categoria = "PER_SUSCRIPCIONES";
-    } else if (textoLower.includes("pedidosya") || textoLower.includes("yummy") || textoLower.includes("restaurante") || textoLower.includes("pizza") || textoLower.includes("café")) {
-      entidad = "PERSONAL";
-      categoria = "PER_RESTAURANTES";
-    } else if (textoLower.includes("caucho") || textoLower.includes("batería") || textoLower.includes("taller") || textoLower.includes("aceite")) {
-      entidad = "PERSONAL";
-      categoria = "SOBRE_VEHICULO";
+      categoria = "PER_ESPARCIMIENTO";
     }
 
     return {
@@ -127,6 +121,7 @@
       const { data, error } = await client
         .from("fin_gmail_facturas_bandeja")
         .select("*")
+        .gt("monto_usd_bcv", 0)
         .order("fecha_correo", { ascending: false })
         .limit(40);
       if (!error && data) {
