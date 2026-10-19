@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#090d16">
+  <title>📱 Escáner Facturas & Voz — Presupuesto Gabriel</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Librería OCR Tesseract.js v5 para leer montos de facturas desde la cámara del teléfono -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    body {
+      padding-bottom: 40px;
+      background: #090d16;
+    }
+    .mobile-shell {
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+    .mobile-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: rgba(17, 24, 39, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+    }
+    .camera-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .camera-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 18px 12px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 13.5px;
+      cursor: pointer;
+      text-align: center;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .camera-btn:active {
+      transform: scale(0.97);
+    }
+    .camera-btn.primary-cam {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: #ffffff;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+    }
+    .camera-btn.secondary-cam {
+      background: rgba(30, 41, 59, 0.9);
+      color: #e2e8f0;
+      border-color: #38bdf8;
+    }
+    .mic-hero-btn {
+      width: 100%;
+      padding: 18px 16px;
+      border-radius: 16px;
+      border: 2px solid #10b981;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.32) 100%);
+      color: #ecfdf5;
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 10px;
+    }
+    .mic-hero-btn.listening {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border-color: #fca5a5;
+      color: #ffffff;
+      animation: pulseMic 1.2s infinite;
+    }
+    @keyframes pulseMic {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .quick-cats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .quick-cat-btn {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      padding: 11px 10px;
+      border-radius: 11px;
+      font-size: 12.5px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.15s ease;
+    }
+    .quick-cat-btn.active {
+      background: rgba(79, 70, 229, 0.28);
+      border-color: #818cf8;
+      color: #ffffff;
+      box-shadow: 0 0 0 1px #818cf8;
+    }
+    .voice-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .voice-chip:active {
+      background: rgba(16, 185, 129, 0.25);
+      border-color: #10b981;
+    }
+    .big-amount-input {
+      font-size: 26px !important;
+      font-weight: 900 !important;
+      color: #34d399 !important;
+      text-align: right;
+      padding: 12px 14px !important;
+      background: #090d16 !important;
+      border: 2px solid #334155 !important;
+      border-radius: 12px !important;
+    }
+    .big-amount-input:focus {
+      border-color: #10b981 !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- OVERLAY DE AUTENTICACIÓN PRIVADA (MISMA SESIÓN QUE EL TABLERO PRINCIPAL) -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-badge" style="margin: 0 auto 12px;">📱</div>
+        <h2>Escáner Facturas &amp; Voz</h2>
+        <p>Acceso Privado Móvil &bull; Presupuesto Personal, Magia con K y Papel</p>
+      </div>
+
+      <div id="auth-alert" class="auth-alert" style="display: none;"></div>
+
+      <form id="auth-form">
+        <div class="auth-field">
+          <label for="auth-email">Correo Electrónico</label>
+          <input type="email" id="auth-email" placeholder="tu@correo.com" required autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label for="auth-password">Contraseña</label>
+          <div style="position: relative;">
+            <input type="password" id="auth-password" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 40px;">
+            <button type="button" id="btn-toggle-password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 16px;">👁️</button>
+          </div>
+        </div>
+        <button type="submit" id="auth-submit-btn" class="auth-btn">
+          <span id="auth-btn-text">Entrar al Escáner Móvil</span>
+        </button>
+      </form>
+      <div class="auth-footer">
+        <span id="auth-toggle-mode"><a href="#" id="auth-switch-link">Cambiar modo registro</a></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-shell">
+    <!-- BARRA SUPERIOR MÓVIL -->
+    <div class="mobile-topbar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="logo-badge" style="width:36px; height:36px; font-size:17px;">📸</div>
+        <div>
+          <div style="font-size:15px; font-weight:800; color:#f8fafc;">Escáner Facturas &amp; Voz</div>
+          <div style="font-size:11px; color:#94a3b8;" id="cloud-status-text">Conectado a Supabase Cloud</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button type="button" id="btn-toggle-tts" onclick="window.toggleVoiceFeedback()" style="background:rgba(16,185,129,0.12); border:1px solid #10b981; color:#34d399; border-radius:8px; padding:6px 9px; font-size:11px; font-weight:700; cursor:pointer;">
+          🔊 Voz: ON
+        </button>
+        <a href="index.html" style="background:rgba(99,102,241,0.18); border:1px solid #6366f1; color:#a5b4fc; text-decoration:none; border-radius:8px; padding:6px 10px; font-size:11.5px; font-weight:700;">
+          📊 Tablero
+        </a>
+      </div>
+    </div>
+
+    <!-- TASAS RÁPIDAS EN LÍNEA -->
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <div style="flex:1; background:#111827; border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:11px; color:#94a3b8; font-weight:700;">BCV (Bs/$):</span>
+        <input type="number" id="mobile-tasa-bcv" value="875" step="0.5" oninput="window.actualizarUIFromControlesMovil()" style="width:72px; background:#090d16; border:1px solid #334155; color:#f8fafc; border-radius:6px; padding:3px 6px; font-weight:800; text-align:right;">
+      </div>
+      <div style="flex:1; background:#111827; border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:11px; color:#94a3b8; font-weight:700;">USDT P2P:</span>
+        <input type="number" id="mobile-tasa-binance" value="1015" step="0.5" oninput="window.actualizarUIFromControlesMovil()" style="width:72px; background:#090d16; border:1px solid #334155; color:#38bdf8; border-radius:6px; padding:3px 6px; font-weight:800; text-align:right;">
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- PASO 1: TOMAR FOTO DE LA FACTURA O SUBIR CAPTURA                     -->
+    <!-- ==================================================================== -->
+    <div class="panel" style="padding:14px; margin-bottom:14px; border-color:rgba(99,102,241,0.45);">
+      <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#a5b4fc; margin-bottom:10px; letter-spacing:0.4px;">
+        1️⃣ Paso 1: Captura la Factura o Recibo (Opcional si usas solo Voz)
+      </div>
+
+      <div class="camera-grid">
+        <label class="camera-btn primary-cam">
+          <span style="font-size:26px;">📷</span>
+          <span>Tomar Foto Factura</span>
+          <span style="font-size:10.5px; font-weight:500; opacity:0.85;">Abre Cámara Trasera</span>
+          <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.procesarFotoFactura(event)">
+        </label>
+
+        <label class="camera-btn secondary-cam">
+          <span style="font-size:26px;">🖼️</span>
+          <span>Subir Captura</span>
+          <span style="font-size:10.5px; font-weight:500; color:#94a3b8;">Pago Móvil / Binance</span>
+          <input type="file" accept="image/*" style="display:none;" onchange="window.procesarFotoFactura(event)">
+        </label>
+      </div>
+
+      <div id="ocr-status-box" style="background:#0f172a; border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:12.5px; color:#cbd5e1;">
+        💡 Toma una foto de la factura para extraer el <strong>Monto Total</strong>, <strong>Moneda</strong> y <strong>RIF</strong> automáticamente.
+      </div>
+
+      <!-- Vista previa de la foto y progreso OCR -->
+      <div id="ocr-preview-container" style="display:none; margin-top:10px;">
+        <div class="progress-track" style="height:6px; margin-bottom:8px;">
+          <div id="ocr-progress-bar" class="progress-fill" style="width:0%; background:linear-gradient(90deg, #6366f1, #10b981);"></div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:stretch;">
+          <img id="ocr-image-preview" alt="Factura capturada" style="width:90px; height:90px; object-fit:cover; border-radius:10px; border:1px solid #475569;">
+          <textarea id="ocr-raw-text" rows="3" style="flex:1; background:#090d16; border:1px solid #334155; color:#94a3b8; border-radius:8px; padding:8px; font-size:11px;" placeholder="Texto leído de la factura..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- PASO 2: COMANDO DE VOZ PARA INDICAR A DÓNDE PERTENECE EL GASTO       -->
+    <!-- ==================================================================== -->
+    <div class="panel" style="padding:14px; margin-bottom:14px; border-color:rgba(16,185,129,0.45);">
+      <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#34d399; margin-bottom:10px; letter-spacing:0.4px;">
+        2️⃣ Paso 2: Dime por Voz a Dónde Pertenece el Gasto
+      </div>
+
+      <button type="button" id="btn-mic-main" class="mic-hero-btn" onclick="window.iniciarEscuchaVoz()">
+        <span style="font-size:24px;">🎙️</span>
+        <span>Toca para Hablar (Dictar Destino o Monto)</span>
+      </button>
+
+      <div id="voice-status-text" style="font-size:12px; color:#cbd5e1; margin-bottom:8px; line-height:1.4;">
+        Puedes decir: <em>"Esto es de Casa en Farmatodo"</em>, <em>"Ponlo en Mercado 25000 bolívares"</em>, <em>"Escuela de la niña 75 dólares"</em> o <em>"Es de Magia con K pagado con mi cuenta personal"</em>.
+      </div>
+
+      <!-- Caja editable de instrucción de voz (por si quiere ajustar o probar sin hablar) -->
+      <div style="display:flex; gap:6px; margin-bottom:10px;">
+        <input type="text" id="voice-transcript-input" class="form-control" placeholder="O escribe aquí tu instrucción (ej: Casa compra en Farmatodo 14500 Bs)..." style="font-size:13px;">
+        <button type="button" onclick="window.procesarInstruccionDeVoz(document.getElementById('voice-transcript-input').value)" style="background:#10b981; color:#052e16; font-weight:800; border:none; border-radius:9px; padding:0 14px; cursor:pointer; font-size:12.5px;">
+          Aplicar
+        </button>
+      </div>
+
+      <!-- Chips rápidos de prueba / comandos de 1 toque -->
+      <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:4px;">
+        <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Esto pertenece a Casa compra en Farmatodo')">🗣️ "Es de Casa / Farmatodo"</button>
+        <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Pertenece a Mercado supermercado')">🗣️ "Va para Mercado"</button>
+        <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Escuela de hija mensualidad 75 dólares')">🗣️ "Escuela de Hija $75"</button>
+        <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Pertenece a Esparcimiento salida familiar')">🗣️ "Esparcimiento"</button>
+        <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Gasto de Magia con K pagado con mi cuenta personal')">🗣️ "Magia con mi cuenta"</button>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- PASO 3: VERIFICACIÓN VISUAL Y GUARDADO EN 1 TOQUE                    -->
+    <!-- ==================================================================== -->
+    <form class="panel" style="padding:14px; margin-bottom:14px;" onsubmit="window.guardarGastoEscaneado(event)">
+      <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#38bdf8; margin-bottom:10px; letter-spacing:0.4px;">
+        3️⃣ Paso 3: Confirma Monto y Categoría Asignada
+      </div>
+
+      <!-- Monto Grande y Moneda -->
+      <div style="display:grid; grid-template-columns: 1.3fr 1fr; gap:8px; margin-bottom:12px;">
+        <div>
+          <label style="font-size:11px; color:#94a3b8; font-weight:700; display:block; margin-bottom:4px;">MONTO RECONOCIDO:</label>
+          <input type="number" id="scan-monto" class="form-control big-amount-input" step="0.01" min="0.01" placeholder="0.00" required oninput="window.actualizarUIFromControlesMovil()">
+        </div>
+        <div>
+          <label style="font-size:11px; color:#94a3b8; font-weight:700; display:block; margin-bottom:4px;">MONEDA:</label>
+          <select id="scan-moneda" class="form-control" style="height:56px; font-size:15px; font-weight:800;" onchange="window.actualizarUIFromControlesMovil()">
+            <option value="VES">🇻🇪 Bs (VES)</option>
+            <option value="USD_CASH">💵 USD Efectivo</option>
+            <option value="USDT">💎 USDT Binance</option>
+            <option value="USD_ZELLE">🏦 Zelle USD</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Botones Rápidos de Destino (Tus 4 Pilares + Emprendimientos) -->
+      <label style="font-size:11px; color:#94a3b8; font-weight:700; display:block; margin-bottom:6px;">
+        DESTINO DEL GASTO (SE ACTIVA POR VOZ O TOCANDO):
+      </label>
+      <div class="quick-cats-grid">
+        <button type="button" class="quick-cat-btn active" data-entidad="PERSONAL" data-cat="PER_CASA" onclick="window.seleccionarDestinoRapido('PERSONAL', 'PER_CASA')">
+          <span>🏠</span> <span>Casa / Farmatodo</span>
+        </button>
+        <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="PER_MERCADO" onclick="window.seleccionarDestinoRapido('PERSONAL', 'PER_MERCADO')">
+          <span>🛒</span> <span>Mercado</span>
+        </button>
+        <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="PER_ESCUELA_HIJA" onclick="window.seleccionarDestinoRapido('PERSONAL', 'PER_ESCUELA_HIJA')">
+          <span>🎒</span> <span>Escuela Hija ($75)</span>
+        </button>
+        <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="SOBRE_ESCUELA_CUOTAS" onclick="window.seleccionarDestinoRapido('PERSONAL', 'SOBRE_ESCUELA_CUOTAS')">
+          <span>🎓</span> <span>Cuotas Escuela</span>
+        </button>
+        <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="PER_ESPARCIMIENTO" onclick="window.seleccionarDestinoRapido('PERSONAL', 'PER_ESPARCIMIENTO')">
+          <span>🎡</span> <span>Esparcimiento</span>
+        </button>
+        <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="SOBRE_SALUD_VEHICULO" onclick="window.seleccionarDestinoRapido('PERSONAL', 'SOBRE_SALUD_VEHICULO')">
+          <span>🏥</span> <span>Salud / Imprevistos</span>
+        </button>
+        <button type="button" class="quick-cat-btn" data-entidad="MAGIA_CON_K" data-cat="" onclick="window.seleccionarDestinoRapido('MAGIA_CON_K', '')">
+          <span>🔮</span> <span>Magia con K</span>
+        </button>
+        <button type="button" class="quick-cat-btn" data-entidad="PAPEL" data-cat="" onclick="window.seleccionarDestinoRapido('PAPEL', '')">
+          <span>📄</span> <span>Papel B2B</span>
+        </button>
+      </div>
+
+      <!-- Selectores detallados (sincronizados con los botones rápidos) -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+        <div>
+          <label style="font-size:11px; color:#94a3b8;">Bolsillo / Entidad:</label>
+          <select id="scan-entidad" class="form-control" onchange="window.actualizarUIFromControlesMovil()">
+            <option value="PERSONAL">👤 Personal (Gabriel)</option>
+            <option value="MAGIA_CON_K">🔮 Magia con K</option>
+            <option value="PAPEL">📄 Papel B2B</option>
+          </select>
+        </div>
+        <div id="mobile-group-categoria">
+          <label style="font-size:11px; color:#94a3b8;">Categoría Personal:</label>
+          <select id="scan-categoria" class="form-control" onchange="window.actualizarUIFromControlesMovil()">
+            <option value="PER_CASA">🏠 Casa (Servicios / Farmatodo)</option>
+            <option value="PER_MERCADO">🛒 Mercado (Supermercado / TDD)</option>
+            <option value="PER_ESCUELA_HIJA">🎒 Escuela de Hija ($75)</option>
+            <option value="SOBRE_ESCUELA_CUOTAS">🎓 Cuotas Especiales Escuela</option>
+            <option value="PER_ESPARCIMIENTO">🎡 Esparcimiento</option>
+            <option value="SOBRE_SALUD_VEHICULO">🏥 Salud / Imprevistos</option>
+            <option value="FUT_FONDO_PAZ">🛡️ Fondo de Paz (USDT)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1.2fr 0.8fr; gap:8px; margin-bottom:10px;">
+        <div>
+          <label style="font-size:11px; color:#94a3b8;">Tipo de Operación / Cruce:</label>
+          <select id="scan-tipo-mov" class="form-control">
+            <option value="GASTO_PERSONAL">🛒 Gasto Personal Directo</option>
+            <option value="GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO">⚡ Cruce: Pagué algo del Negocio con mi cuenta</option>
+            <option value="GASTO_CRUZADO_NEGOCIO_PAGA_SOCIO">⚠️ Cruce: Pagué algo Personal con caja del Negocio</option>
+            <option value="GASTO_OPERATIVO_NEGOCIO">📦 Gasto Operativo del Negocio</option>
+            <option value="APORTE_SOBRE">🏦 Aporte a Sobre / Fondo de Paz</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px; color:#94a3b8;">Fecha:</label>
+          <input type="date" id="scan-fecha" class="form-control" required>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1.3fr 0.7fr; gap:8px; margin-bottom:10px;">
+        <div>
+          <label style="font-size:11px; color:#94a3b8;">Concepto / Comercio:</label>
+          <input type="text" id="scan-concepto" class="form-control" placeholder="Ej: Compra Farmatodo / Mercado / Mensualidad...">
+        </div>
+        <div>
+          <label style="font-size:11px; color:#94a3b8;">RIF / N° Factura:</label>
+          <input type="text" id="scan-rif" class="form-control" placeholder="Opcional">
+        </div>
+      </div>
+
+      <!-- Tarjeta de Conversión Bimonetaria y Saldo Disponible de la Categoría -->
+      <div id="mobile-conversion-box" style="background:#0f172a; border:1px solid rgba(56,189,248,0.35); border-radius:12px; padding:12px; margin-bottom:12px;">
+        <!-- Renderizado por scanner_voz_movil.js -->
+      </div>
+
+      <!-- Checks Fiscales -->
+      <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:14px; font-size:12px; color:#cbd5e1;">
+        <label style="display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" id="scan-factura-fiscal" checked>
+          <span>🧾 Factura Fiscal SENIAT</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" id="scan-desgravamen-islr">
+          <span>🏥 Desgravamen ISLR (Art. 59)</span>
+        </label>
+      </div>
+
+      <button type="submit" id="btn-save-mobile" class="btn-primary" style="padding:15px; font-size:16px; border-radius:14px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);">
+        ✅ Guardar Gasto en Supabase Cloud
+      </button>
+    </form>
+
+    <!-- HISTORIAL DE ÚLTIMOS GASTOS ANOTADOS -->
+    <div class="panel" style="padding:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:13px; font-weight:800; color:#f8fafc;">📥 Últimos Gastos Sincronizados</span>
+        <button type="button" onclick="window.sincronizarTunelSupabase && window.sincronizarTunelSupabase(true)" style="background:none; border:1px solid #475569; color:#cbd5e1; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer;">
+          🔄 Actualizar
+        </button>
+      </div>
+      <div id="mobile-recent-list">
+        <!-- Renderizado por scanner_voz_movil.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor Toast -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts de Supabase y Sincronización -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase_config.js"></script>
+  <script src="data.js"></script>
+  <script src="supabase_adapter.js"></script>
+  <script src="scanner_voz_movil.js"></script>
+  <script src="auth_controller.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "Escáner Facturas & Voz — Presupuesto Gabriel",
+  "short_name": "Escáner Gastos",
+  "description": "Escáner móvil de facturas por cámara (OCR) y comandos de voz para Presupuesto Personal, Magia con K y Papel.",
+  "start_url": "./movil.html",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait"
+}
