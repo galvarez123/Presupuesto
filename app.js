@@ -210,9 +210,10 @@
       }
     });
 
-    const sueldoMagia = Number(state.entidades.find(e => e.codigo === "MAGIA_CON_K")?.sueldo_fundador_mensual_usd || 350);
-    const sueldoPapel = Number(state.entidades.find(e => e.codigo === "PAPEL")?.sueldo_fundador_mensual_usd || 250);
-    const ingresoPersonalMeta = sueldoMagia + sueldoPapel;
+    const salarioExterno = Number(state.entidades.find(e => e.codigo === "PERSONAL")?.sueldo_fundador_mensual_usd || state.salarioExternoMensualUsd || 1000);
+    const sueldoMagia = 0;
+    const sueldoPapel = 0;
+    const ingresoPersonalMeta = salarioExterno;
 
     // Cruces Patrimoniales pendientes del mes
     let magiaDebeASocio = 0;
@@ -290,25 +291,25 @@
 
     if (state.entidadActiva === "PERSONAL") {
       grid.innerHTML = `
-        <div class="kpi-card green">
-          <div class="kpi-title"><span>Presupuesto Mensual (${resumen.nombreMesActivo})</span> <span class="pill-tag pill-green">Base Cero</span></div>
+        <div class="kpi-card green" style="cursor:pointer;" onclick="window.editarSalarioExternoPrompt()" title="Haz clic para ajustar tu salario mensual de trabajo por fuera">
+          <div class="kpi-title"><span>💼 Salario Trabajo por Fuera (${resumen.nombreMesActivo})</span> <span class="pill-tag pill-green">Base Cero</span></div>
           <div class="kpi-val" style="color: #34d399;">${fmtUSD(resumen.ingresoPersonalMeta)}<span style="font-size:13px; color:#94a3b8;">/mes</span></div>
-          <div class="kpi-sub">🔮 Magia: ${fmtUSD(resumen.sueldoMagia)} + 📄 Papel: ${fmtUSD(resumen.sueldoPapel)}</div>
+          <div class="kpi-sub">Sin salario de Magia ($0) ni Papel ($0) &bull; ✏️ Ajustar</div>
         </div>
-        <div class="kpi-card cyan">
+        <div class="kpi-card cyan" style="cursor:pointer;" onclick="window.abrirDetalleCategoriaModal('TODOS_PERSONAL', 'TODOS')">
           <div class="kpi-title"><span>Gasto Ejecutado (${resumen.nombreMesActivo})</span> <span>${pctEjec}%</span></div>
           <div class="kpi-val">${fmtUSD(resumen.totalEjecutadoPersonal)} <span style="font-size:14px; color:#94a3b8;">/ ${fmtUSD(resumen.totalPresupuestadoPersonal)}</span></div>
-          <div class="kpi-sub">Disponible este mes: <strong style="color:#38bdf8;">${fmtUSD(disponibleMes)}</strong></div>
+          <div class="kpi-sub">Disponible este mes: <strong style="color:#38bdf8;">${fmtUSD(disponibleMes)}</strong> (🔍 Toca para ver movs)</div>
         </div>
-        <div class="kpi-card purple">
-          <div class="kpi-title"><span>🏠 Casa + 🛒 Mercado (${resumen.nombreMesActivo})</span></div>
-          <div class="kpi-val" style="color: #c084fc;">${fmtUSD((resumen.gastoPorCategoria["PER_CASA"] || 0) + (resumen.gastoPorCategoria["PER_MERCADO"] || 0))}</div>
-          <div class="kpi-sub">Casa: ${fmtUSD(resumen.gastoPorCategoria["PER_CASA"] || 0)} | Mercado: ${fmtUSD(resumen.gastoPorCategoria["PER_MERCADO"] || 0)}</div>
+        <div class="kpi-card purple" style="cursor:pointer;" onclick="window.abrirDetalleCategoriaModal('BLOQUE', 'BLOQUE_A_VITALES')">
+          <div class="kpi-title"><span>🏠 Casa + 🛒 Mercado + 🚗 Carro (${resumen.nombreMesActivo})</span></div>
+          <div class="kpi-val" style="color: #c084fc;">${fmtUSD((resumen.gastoPorCategoria["PER_CASA"] || 0) + (resumen.gastoPorCategoria["PER_MERCADO"] || 0) + (resumen.gastoPorCategoria["PER_CARRO"] || 0))}</div>
+          <div class="kpi-sub">Casa: ${fmtUSD(resumen.gastoPorCategoria["PER_CASA"] || 0)} | Mercado: ${fmtUSD(resumen.gastoPorCategoria["PER_MERCADO"] || 0)} | Carro: ${fmtUSD(resumen.gastoPorCategoria["PER_CARRO"] || 0)}</div>
         </div>
-        <div class="kpi-card amber">
-          <div class="kpi-title"><span>Ahorro Cambiario (${resumen.nombreMesActivo})</span></div>
-          <div class="kpi-val" style="color: #fbbf24;">+${fmtUSD(resumen.ahorroCambiarioMes)}</div>
-          <div class="kpi-sub">Reembolso neto a tu favor de negocios: <strong>${fmtUSD(resumen.saldoNetoPuenteSocio)}</strong></div>
+        <div class="kpi-card amber" style="cursor:pointer;" onclick="window.abrirDetalleCategoriaModal('CATEGORIA', 'PER_DEUDAS')">
+          <div class="kpi-title"><span>💳 Deudas + 💱 Ahorro (${resumen.nombreMesActivo})</span></div>
+          <div class="kpi-val" style="color: #fbbf24;">Deudas: ${fmtUSD(resumen.gastoPorCategoria["PER_DEUDAS"] || 0)} <span style="font-size:13px; color:#94a3b8;">/ $160</span></div>
+          <div class="kpi-sub">Ahorro Cambiario: +${fmtUSD(resumen.ahorroCambiarioMes)} | Cruces: <strong>+${fmtUSD(resumen.saldoNetoPuenteSocio)}</strong></div>
         </div>
       `;
       return;
@@ -332,9 +333,9 @@
           <div class="kpi-sub">Calculado sobre las ventas de ${resumen.nombreMesActivo}</div>
         </div>
         <div class="kpi-card amber">
-          <div class="kpi-title"><span>Compromiso Mensual con Socio</span></div>
-          <div class="kpi-val" style="color: #fbbf24;">${fmtUSD(resumen.sueldoMagia)}<span style="font-size:13px;">/mes</span></div>
-          <div class="kpi-sub">Deuda por gastos cruzados a reembolsar: <strong>${fmtUSD(resumen.magiaDebeASocio)}</strong></div>
+          <div class="kpi-title"><span>Política de Salario / Reinversión</span></div>
+          <div class="kpi-val" style="color: #fbbf24;">$0.00<span style="font-size:13px;"> salario</span></div>
+          <div class="kpi-sub">Reinversión 100% | Gastos cruzados a reembolsar: <strong>${fmtUSD(resumen.magiaDebeASocio)}</strong></div>
         </div>
       `;
       return;
@@ -358,9 +359,9 @@
           <div class="kpi-sub">Calculado sobre facturación de ${resumen.nombreMesActivo}</div>
         </div>
         <div class="kpi-card amber">
-          <div class="kpi-title"><span>Sueldo Socio + Cuenta Puente</span></div>
-          <div class="kpi-val" style="color: #fbbf24;">${fmtUSD(resumen.sueldoPapel)}<span style="font-size:13px;">/mes</span></div>
-          <div class="kpi-sub">Saldo neto por reembolsar al socio: <strong>${fmtUSD(resumen.papelDebeASocio - resumen.socioDebeANegocios)}</strong></div>
+          <div class="kpi-title"><span>Política de Salario / Reinversión</span></div>
+          <div class="kpi-val" style="color: #fbbf24;">$0.00<span style="font-size:13px;"> salario</span></div>
+          <div class="kpi-sub">Reinversión 100% | Cuenta puente neta socio: <strong>${fmtUSD(resumen.papelDebeASocio - resumen.socioDebeANegocios)}</strong></div>
         </div>
       `;
       return;
@@ -368,13 +369,13 @@
 
     // VISTA CONSOLIDADA 100% MENSUAL (SIN ACUMULADOS GLOBALES)
     grid.innerHTML = `
-      <div class="kpi-card green">
+      <div class="kpi-card green" style="cursor:pointer;" onclick="window.abrirDetalleCategoriaModal('TODOS_PERSONAL', 'TODOS')" title="Toca para ver todas las transacciones personales del mes">
         <div class="kpi-title">
           <span>👤 Presupuesto Personal (${resumen.nombreMesActivo})</span>
-          <span class="pill-tag pill-green">${pctEjec}% Ejecutado</span>
+          <span class="pill-tag pill-green">${pctEjec}% de $1,000</span>
         </div>
         <div class="kpi-val" style="color: #34d399;">${fmtUSD(resumen.totalEjecutadoPersonal)} <span style="font-size:13px; color:#94a3b8;">/ ${fmtUSD(resumen.totalPresupuestadoPersonal)}</span></div>
-        <div class="kpi-sub">Disponible para gastar este mes: <strong style="color:#f8fafc;">${fmtUSD(disponibleMes)}</strong></div>
+        <div class="kpi-sub">Salario Trabajo por Fuera: <strong>$1,000/mes</strong> | Disp: <strong style="color:#f8fafc;">${fmtUSD(disponibleMes)}</strong></div>
       </div>
 
       <div class="kpi-card purple">
@@ -437,27 +438,27 @@
 
     if (strip) {
       strip.innerHTML = `
-        <div style="background:#0f172a; border:1px solid var(--border); padding:12px 14px; border-radius:10px;">
-          <div style="font-size:11px; color:#94a3b8; font-weight:700;">PRESUPUESTO DEL MES (${resumen.nombreMesActivo.toUpperCase()})</div>
-          <div style="font-size:19px; font-weight:800; color:#34d399; margin-top:2px;">${fmtUSD(resumen.totalPresupuestadoPersonal)} / mes</div>
-          <div style="font-size:11.5px; color:#cbd5e1;">Sueldo Fundador: Magia ($350) + Papel ($250)</div>
+        <div style="background:#0f172a; border:1px solid var(--border); padding:12px 14px; border-radius:10px; cursor:pointer;" onclick="window.editarSalarioExternoPrompt()">
+          <div style="font-size:11px; color:#94a3b8; font-weight:700;">💼 SALARIO TRABAJO POR FUERA (${resumen.nombreMesActivo.toUpperCase()})</div>
+          <div style="font-size:19px; font-weight:800; color:#34d399; margin-top:2px;">${fmtUSD(resumen.ingresoPersonalMeta)} / mes</div>
+          <div style="font-size:11.5px; color:#cbd5e1;">Sin salarios de Magia ni Papel &bull; ✏️ Clic para editar</div>
         </div>
-        <div style="background:#0f172a; border:1px solid var(--border); padding:12px 14px; border-radius:10px;">
+        <div style="background:#0f172a; border:1px solid var(--border); padding:12px 14px; border-radius:10px; cursor:pointer;" onclick="window.abrirDetalleCategoriaModal('TODOS_PERSONAL', 'TODOS')">
           <div style="font-size:11px; color:#94a3b8; font-weight:700;">GASTO EJECUTADO EN ${resumen.nombreMesActivo.toUpperCase()}</div>
           <div style="font-size:19px; font-weight:800; color:#38bdf8; margin-top:2px;">
-            ${fmtUSD(resumen.totalEjecutadoPersonal)} <span style="font-size:12px; color:#94a3b8;">(${pctPresupuestoEjecutado}% del mes)</span>
+            ${fmtUSD(resumen.totalEjecutadoPersonal)} <span style="font-size:12px; color:#94a3b8;">(${pctPresupuestoEjecutado}% de ${fmtUSD(resumen.totalPresupuestadoPersonal)})</span>
           </div>
-          <div style="font-size:11.5px; color:#cbd5e1;">Basado sólo en movimientos de ${resumen.nombreMesActivo}</div>
+          <div style="font-size:11.5px; color:#cbd5e1;">🔍 Clic para auditar o mover todas las transacciones del mes</div>
         </div>
         <div style="background:#0f172a; border:1px solid var(--border); padding:12px 14px; border-radius:10px;">
           <div style="font-size:11px; color:#94a3b8; font-weight:700;">DISPONIBLE RESTANTE DEL MES</div>
           <div style="font-size:19px; font-weight:800; color:${disponibleMes >= 0 ? "#c084fc" : "#ef4444"}; margin-top:2px;">${fmtUSD(disponibleMes)}</div>
           <div style="font-size:11.5px; color:#cbd5e1;">Equiv. BCV: ${fmtVES(Math.max(0, disponibleMes) * resumen.bcv)}</div>
         </div>
-        <div style="background:#0f172a; border:1px solid var(--border); padding:12px 14px; border-radius:10px;">
-          <div style="font-size:11px; color:#94a3b8; font-weight:700;">AHORRO CAMBIARIO EN ${resumen.nombreMesActivo.toUpperCase()}</div>
-          <div style="font-size:19px; font-weight:800; color:#fbbf24; margin-top:2px;">+${fmtUSD(resumen.ahorroCambiarioMes)}</div>
-          <div style="font-size:11.5px; color:#cbd5e1;">Pagando Casa, Escuela y Mercado en Bs a BCV</div>
+        <div style="background:#0f172a; border:1px solid var(--border); padding:12px 14px; border-radius:10px; cursor:pointer;" onclick="window.abrirDetalleCategoriaModal('CATEGORIA', 'PER_DEUDAS')">
+          <div style="font-size:11px; color:#94a3b8; font-weight:700;">🚗 CARRO + 💳 DEUDAS (${resumen.nombreMesActivo.toUpperCase()})</div>
+          <div style="font-size:19px; font-weight:800; color:#fbbf24; margin-top:2px;">${fmtUSD((resumen.gastoPorCategoria["PER_CARRO"] || 0) + (resumen.gastoPorCategoria["PER_DEUDAS"] || 0))} <span style="font-size:12px; color:#94a3b8;">/ $290.00</span></div>
+          <div style="font-size:11.5px; color:#cbd5e1;">Carro: $130 tope | Deudas: $160 tope &bull; 🔍 Ver detalle</div>
         </div>
       `;
     }
@@ -467,9 +468,15 @@
     const definicionBloques = [
       {
         id: "BLOQUE_A_VITALES",
-        titulo: `🏠 Pilares Mensuales Vitales (${resumen.nombreMesActivo})`,
-        subtitulo: "Casa (incl. Farmatodo), Mercado y Mensualidad Escuela de Hija ($75)",
+        titulo: `🏠 Pilares Mensuales Vitales: Casa, Mercado, Escuela y Carro (${resumen.nombreMesActivo})`,
+        subtitulo: "Toca cualquier categoría para ver sus transacciones del periodo, moverlas de categoría o confirmarlas",
         color: "#10b981"
+      },
+      {
+        id: "BLOQUE_D_FUTURO_DEUDAS",
+        titulo: `💳 Compromisos de Deudas y Fondo de Paz (${resumen.nombreMesActivo})`,
+        subtitulo: "Abonos mensuales de Deudas ($160/mes) y Aporte al Fondo de Paz USDT ($40/mes)",
+        color: "#a855f7"
       },
       {
         id: "BLOQUE_C_ESTILO_VIDA",
@@ -479,15 +486,9 @@
       },
       {
         id: "BLOQUE_B_SOBRES",
-        titulo: `🎓 Apartados Mensuales para Cuotas Especiales y Salud (${resumen.nombreMesActivo})`,
+        titulo: `🎓 Apartados Mensuales para Cuotas Especiales Escuela y Salud (${resumen.nombreMesActivo})`,
         subtitulo: "Cuota mensual apartada en este mes para Cuotas Especiales del Colegio y Salud",
         color: "#38bdf8"
-      },
-      {
-        id: "BLOQUE_D_FUTURO_DEUDAS",
-        titulo: `🛡️ Aporte Mensual al Fondo de Paz (${resumen.nombreMesActivo})`,
-        subtitulo: "Ahorro mensual separado en USDT durante este mes",
-        color: "#a855f7"
       }
     ];
 
@@ -523,7 +524,7 @@
           : "";
 
         return `
-          <div class="budget-item">
+          <div class="budget-item" style="cursor:pointer; transition: transform 0.15s ease, border-color 0.15s ease;" onclick="window.abrirDetalleCategoriaModal('CATEGORIA', '${c.codigo}')" title="Toca para ver las transacciones de ${c.nombre}, moverlas o confirmarlas">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
               <div>
                 <strong style="font-size:13.5px; color:#f8fafc;">${c.icono || "📌"} ${c.nombre}</strong>
@@ -547,11 +548,16 @@
               <div class="progress-fill" style="width:${pct}%; background:${barColor};"></div>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:#94a3b8; margin-top:4px;">
-              <span>${c.notas || ""}</span>
-              <button type="button" style="background:none; border:1px solid #475569; color:#cbd5e1; border-radius:6px; padding:2px 8px; font-size:11px; cursor:pointer;" onclick="window.editarTopeCategoriaPrompt('${c.codigo}')">
-                ✏️ Tope Mensual
-              </button>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:#94a3b8; margin-top:6px; gap:8px; flex-wrap:wrap;">
+              <span style="flex:1;">${c.notas || ""}</span>
+              <div style="display:flex; gap:6px;">
+                <button type="button" style="background:rgba(56,189,248,0.16); border:1px solid #38bdf8; color:#7dd3fc; border-radius:6px; padding:3px 9px; font-size:11px; font-weight:700; cursor:pointer;" onclick="event.stopPropagation(); window.abrirDetalleCategoriaModal('CATEGORIA', '${c.codigo}')">
+                  🔍 Ver Transacciones (${numMovs})
+                </button>
+                <button type="button" style="background:none; border:1px solid #475569; color:#cbd5e1; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer;" onclick="event.stopPropagation(); window.editarTopeCategoriaPrompt('${c.codigo}')">
+                  ✏️ Tope
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -559,10 +565,10 @@
 
       return `
         <div class="budget-block-card" style="border-top: 3px solid ${bl.color};">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; cursor:pointer;" onclick="window.abrirDetalleCategoriaModal('BLOQUE', '${bl.id}')" title="Toca para ver todas las transacciones de esta sección">
             <h3 style="font-size:15px; font-weight:800; color:#f8fafc;">${bl.titulo}</h3>
             <span class="pill-tag" style="background:rgba(255,255,255,0.08); color:#f8fafc;">
-              Mes: ${fmtUSD(sumEjecutado)} / ${fmtUSD(sumPresupuesto)} (${pctBloque}%)
+              🔍 Mes: ${fmtUSD(sumEjecutado)} / ${fmtUSD(sumPresupuesto)} (${pctBloque}%)
             </span>
           </div>
           <p style="font-size:12px; color:#94a3b8; margin-bottom:12px;">${bl.subtitulo}</p>
@@ -588,10 +594,11 @@
       const gCasa = item.gastoPorCategoria["PER_CASA"] || 0;
       const gMercado = item.gastoPorCategoria["PER_MERCADO"] || 0;
       const gEscuela = (item.gastoPorCategoria["PER_ESCUELA_HIJA"] || 0) + (item.gastoPorCategoria["SOBRE_ESCUELA_CUOTAS"] || 0);
-      const gEsparc = item.gastoPorCategoria["PER_ESPARCIMIENTO"] || 0;
-      const gSaludPaz = (item.gastoPorCategoria["SOBRE_SALUD_VEHICULO"] || 0) + (item.gastoPorCategoria["FUT_FONDO_PAZ"] || 0);
+      const gCarro = item.gastoPorCategoria["PER_CARRO"] || 0;
+      const gDeudas = item.gastoPorCategoria["PER_DEUDAS"] || 0;
+      const gOtros = (item.gastoPorCategoria["PER_ESPARCIMIENTO"] || 0) + (item.gastoPorCategoria["SOBRE_SALUD_VEHICULO"] || 0) + (item.gastoPorCategoria["FUT_FONDO_PAZ"] || 0);
       const totalGasto = item.totalEjecutadoMes;
-      const presupuesto = item.totalPresupuestadoMes || 600;
+      const presupuesto = item.totalPresupuestadoMes || 1000;
       const disponible = presupuesto - totalGasto;
       const pct = Math.round((totalGasto / presupuesto) * 100);
 
@@ -606,12 +613,13 @@
             <strong style="color:#f8fafc;">${item.nombreMes}</strong>
             ${esActivo ? `<span class="pill-tag pill-green" style="margin-left:4px;">Activo</span>` : ""}
           </td>
-          <td style="font-weight:700; color:${gCasa > 0 ? "#f8fafc" : "#64748b"};">${fmtUSD(gCasa)}</td>
-          <td style="font-weight:700; color:${gMercado > 0 ? "#f8fafc" : "#64748b"};">${fmtUSD(gMercado)}</td>
-          <td style="font-weight:700; color:${gEscuela > 0 ? "#c084fc" : "#64748b"};">${fmtUSD(gEscuela)}</td>
-          <td style="font-weight:700; color:${gEsparc > 0 ? "#fbbf24" : "#64748b"};">${fmtUSD(gEsparc)}</td>
-          <td style="font-weight:700; color:${gSaludPaz > 0 ? "#38bdf8" : "#64748b"};">${fmtUSD(gSaludPaz)}</td>
-          <td>
+          <td style="font-weight:700; cursor:pointer; color:${gCasa > 0 ? "#f8fafc" : "#64748b"};" onclick="window.abrirDetalleCategoriaModal('CATEGORIA', 'PER_CASA', '${item.mes}')" title="Clic para ver transacciones de Casa en ${item.nombreMes}">${fmtUSD(gCasa)}</td>
+          <td style="font-weight:700; cursor:pointer; color:${gMercado > 0 ? "#f8fafc" : "#64748b"};" onclick="window.abrirDetalleCategoriaModal('CATEGORIA', 'PER_MERCADO', '${item.mes}')" title="Clic para ver transacciones de Mercado en ${item.nombreMes}">${fmtUSD(gMercado)}</td>
+          <td style="font-weight:700; cursor:pointer; color:${gEscuela > 0 ? "#c084fc" : "#64748b"};" onclick="window.abrirDetalleCategoriaModal('CATEGORIA', 'PER_ESCUELA_HIJA', '${item.mes}')" title="Clic para ver transacciones de Escuela en ${item.nombreMes}">${fmtUSD(gEscuela)}</td>
+          <td style="font-weight:700; cursor:pointer; color:${gCarro > 0 ? "#38bdf8" : "#64748b"};" onclick="window.abrirDetalleCategoriaModal('CATEGORIA', 'PER_CARRO', '${item.mes}')" title="Clic para ver transacciones de Carro en ${item.nombreMes}">${fmtUSD(gCarro)}</td>
+          <td style="font-weight:700; cursor:pointer; color:${gDeudas > 0 ? "#f87171" : "#64748b"};" onclick="window.abrirDetalleCategoriaModal('CATEGORIA', 'PER_DEUDAS', '${item.mes}')" title="Clic para ver transacciones de Deudas en ${item.nombreMes}">${fmtUSD(gDeudas)}</td>
+          <td style="font-weight:700; cursor:pointer; color:${gOtros > 0 ? "#fbbf24" : "#64748b"};" onclick="window.abrirDetalleCategoriaModal('CATEGORIA', 'PER_ESPARCIMIENTO', '${item.mes}')" title="Clic para ver transacciones de Esparcimiento / Salud / Paz">${fmtUSD(gOtros)}</td>
+          <td style="cursor:pointer;" onclick="window.abrirDetalleCategoriaModal('TODOS_PERSONAL', 'TODOS', '${item.mes}')">
             <strong style="color:#f8fafc;">${fmtUSD(totalGasto)}</strong>
             <span style="font-size:11px; color:#94a3b8;">(${pct}%)</span>
           </td>
@@ -740,14 +748,14 @@
               <strong style="color:#fbbf24;">${fmtUSD(resumen.magiaDebeASocio)}</strong>
             </div>
             <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px solid var(--border);">
-              <span style="color:#6ee7b7; font-weight:700;">💵 Sueldo Fundador Mensual:</span>
-              <strong style="color:#34d399; font-size:14px;">${fmtUSD(resumen.sueldoMagia)} / mes</strong>
+              <span style="color:#94a3b8; font-weight:700;">💵 Salario Fijo al Socio:</span>
+              <strong style="color:#cbd5e1; font-size:13px;">$0.00 (Reinversión 100%)</strong>
             </div>
           </div>
 
           <div style="display:flex; gap:8px;">
-            <button type="button" class="sync-action-btn" style="flex:1; justify-content:center; background:rgba(168,85,247,0.2); border:1px solid #a855f7; color:#e9d5ff;" onclick="window.registrarPagoSueldoRapido('MAGIA_CON_K', ${resumen.sueldoMagia})">
-              💸 Transferir Sueldo del Mes
+            <button type="button" class="sync-action-btn" style="flex:1; justify-content:center; background:rgba(168,85,247,0.16); border:1px solid #a855f7; color:#e9d5ff;" onclick="window.openNuevoMovimientoModal('GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO')">
+              ⚡ Registrar Gasto Pagado por Socio
             </button>
           </div>
         </div>
@@ -784,57 +792,59 @@
               <strong style="color:#fbbf24;">${fmtUSD(resumen.papelDebeASocio - resumen.socioDebeANegocios)}</strong>
             </div>
             <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px solid var(--border);">
-              <span style="color:#6ee7b7; font-weight:700;">💵 Sueldo Fundador Mensual:</span>
-              <strong style="color:#34d399; font-size:14px;">${fmtUSD(resumen.sueldoPapel)} / mes</strong>
+              <span style="color:#94a3b8; font-weight:700;">💵 Salario Fijo al Socio:</span>
+              <strong style="color:#cbd5e1; font-size:13px;">$0.00 (Reinversión 100%)</strong>
             </div>
           </div>
 
           <div style="display:flex; gap:8px;">
-            <button type="button" class="sync-action-btn" style="flex:1; justify-content:center; background:rgba(14,165,233,0.2); border:1px solid #0ea5e9; color:#bae6fd;" onclick="window.registrarPagoSueldoRapido('PAPEL', ${resumen.sueldoPapel})">
-              💸 Transferir Sueldo del Mes
+            <button type="button" class="sync-action-btn" style="flex:1; justify-content:center; background:rgba(14,165,233,0.16); border:1px solid #0ea5e9; color:#bae6fd;" onclick="window.openNuevoMovimientoModal('GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO')">
+              ⚡ Registrar Gasto Pagado por Socio
             </button>
           </div>
         </div>
 
-        <!-- Tarjeta 3: BOLSILLO PERSONAL DEL MES -->
+        <!-- Tarjeta 3: BOLSILLO PERSONAL DEL MES ($1,000 SALARIO EXTERNO) -->
         <div class="budget-block-card" style="border-top: 4px solid #10b981;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <div>
               <h3 style="font-size:16px; font-weight:800; color:#f8fafc;">👤 Resumen Personal (${resumen.nombreMesActivo})</h3>
-              <span style="font-size:11.5px; color:#34d399;">Ejecución mensual por categoría</span>
+              <span style="font-size:11.5px; color:#34d399;">Financiado con Salario de Trabajo por Fuera ($1,000/mes)</span>
             </div>
             <span class="pill-tag pill-green">Mensual</span>
           </div>
 
           <div style="background:#0f172a; border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:12px; font-size:12.5px;">
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-              <span style="color:#94a3b8;">Presupuesto Mensual Total:</span>
-              <strong style="color:#34d399;">${fmtUSD(resumen.totalPresupuestadoPersonal)} / mes</strong>
+              <span style="color:#94a3b8;">💼 Salario Trabajo por Fuera:</span>
+              <strong style="color:#34d399;">${fmtUSD(resumen.ingresoPersonalMeta)} / mes</strong>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
               <span style="color:#94a3b8;">🏠 Casa + 🛒 Mercado (${resumen.nombreMesActivo}):</span>
-              <strong>${fmtUSD((resumen.gastoPorCategoria["PER_CASA"] || 0) + (resumen.gastoPorCategoria["PER_MERCADO"] || 0))} / $355.00</strong>
+              <strong>${fmtUSD((resumen.gastoPorCategoria["PER_CASA"] || 0) + (resumen.gastoPorCategoria["PER_MERCADO"] || 0))} / $440.00</strong>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-              <span style="color:#94a3b8;">🎒 Escuela + Cuotas (${resumen.nombreMesActivo}):</span>
-              <strong>${fmtUSD((resumen.gastoPorCategoria["PER_ESCUELA_HIJA"] || 0) + (resumen.gastoPorCategoria["SOBRE_ESCUELA_CUOTAS"] || 0))} / $100.00</strong>
+              <span style="color:#94a3b8;">🚗 Carro + 💳 Deudas (${resumen.nombreMesActivo}):</span>
+              <strong>${fmtUSD((resumen.gastoPorCategoria["PER_CARRO"] || 0) + (resumen.gastoPorCategoria["PER_DEUDAS"] || 0))} / $290.00</strong>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-              <span style="color:#94a3b8;">🎡 Esparcimiento (${resumen.nombreMesActivo}):</span>
-              <strong>${fmtUSD(resumen.gastoPorCategoria["PER_ESPARCIMIENTO"] || 0)} / $80.00</strong>
+              <span style="color:#94a3b8;">🎒 Escuela + 🎡 Esparcimiento (${resumen.nombreMesActivo}):</span>
+              <strong>${fmtUSD((resumen.gastoPorCategoria["PER_ESCUELA_HIJA"] || 0) + (resumen.gastoPorCategoria["SOBRE_ESCUELA_CUOTAS"] || 0) + (resumen.gastoPorCategoria["PER_ESPARCIMIENTO"] || 0))} / $205.00</strong>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:6px; padding-top:6px; border-top:1px dashed var(--border);">
               <span style="color:#38bdf8;">✨ Disponible Restante del Mes:</span>
               <strong style="color:#38bdf8;">${fmtUSD(resumen.totalPresupuestadoPersonal - resumen.totalEjecutadoPersonal)}</strong>
             </div>
             <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px solid var(--border);">
-              <span style="color:#fbbf24; font-weight:700;">⚡ Por Cobrar a Magia + Papel:</span>
+              <span style="color:#fbbf24; font-weight:700;">⚡ Por Cobrar a Magia + Papel (Cruces):</span>
               <strong style="color:#fbbf24; font-size:14px;">+${fmtUSD(resumen.saldoNetoPuenteSocio)}</strong>
             </div>
           </div>
 
-          <div style="font-size:11.5px; color:#94a3b8; line-height:1.4;">
-            ✅ Vista 100% enfocada en el mes activo sin mezclar históricos acumulados.
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="sync-action-btn" style="flex:1; justify-content:center; background:rgba(16,185,129,0.18); border:1px solid #10b981; color:#6ee7b7;" onclick="window.abrirDetalleCategoriaModal('TODOS_PERSONAL', 'TODOS')">
+              🔍 Auditar Todas mis Transacciones del Mes
+            </button>
           </div>
         </div>
       `;
@@ -1416,6 +1426,306 @@
     }
   }
 
+  function editarSalarioExternoPrompt() {
+    const state = window.FINANZAS_STATE;
+    const actual = Number(state.entidades.find(e => e.codigo === "PERSONAL")?.sueldo_fundador_mensual_usd || state.salarioExternoMensualUsd || 1000);
+    const nuevo = prompt("Ingresa tu Salario Mensual de Trabajo por Fuera (USD / mes):", String(actual));
+    if (nuevo === null) return;
+    const val = Number(nuevo);
+    if (isNaN(val) || val <= 0) return;
+    if (typeof window.actualizarSalarioExternoCloud === "function") {
+      window.actualizarSalarioExternoCloud(val);
+    }
+  }
+
+  // ============================================================================
+  // VENTANA MODAL DE INSPECCIÓN DE CATEGORÍA / SECCIÓN DEL PRESUPUESTO
+  // Muestra las transacciones del periodo, día, monto y opciones para mover de
+  // categoría o confirmar.
+  // ============================================================================
+  let modalDetalleActual = {
+    abierto: false,
+    tipoFiltro: "CATEGORIA", // 'CATEGORIA', 'BLOQUE', 'TODOS_PERSONAL'
+    codigoFiltro: "PER_CASA",
+    mes: "2026-10"
+  };
+
+  function formatearDiaLegible(fechaIso) {
+    if (!fechaIso) return "—";
+    const partes = String(fechaIso).split("-");
+    if (partes.length < 3) return fechaIso;
+    const d = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+    const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const mesesCortos = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    return `${diasSemana[d.getDay()] || ""} ${partes[2]} ${mesesCortos[d.getMonth()] || ""} (${fechaIso})`;
+  }
+
+  function abrirDetalleCategoriaModal(tipoFiltro = "CATEGORIA", codigoFiltro = "PER_CASA", mesOpcional = null) {
+    const state = window.FINANZAS_STATE;
+    const mes = mesOpcional || state.mesActivo || "2026-10";
+    if (mesOpcional && mesOpcional !== state.mesActivo) {
+      cambiarMesActivo(mesOpcional);
+    }
+
+    modalDetalleActual = {
+      abierto: true,
+      tipoFiltro,
+      codigoFiltro,
+      mes
+    };
+
+    const modal = document.getElementById("modal-detalle-categoria");
+    if (!modal) return;
+
+    renderizarContenidoModalDetalleCategoria();
+    modal.classList.add("open");
+  }
+
+  function cerrarDetalleCategoriaModal() {
+    modalDetalleActual.abierto = false;
+    const modal = document.getElementById("modal-detalle-categoria");
+    if (modal) modal.classList.remove("open");
+  }
+
+  function refrescarModalDetalleCategoriaSiAbierto() {
+    if (modalDetalleActual.abierto) {
+      renderizarContenidoModalDetalleCategoria();
+    }
+  }
+
+  function renderizarContenidoModalDetalleCategoria() {
+    const state = window.FINANZAS_STATE;
+    const { tipoFiltro, codigoFiltro, mes } = modalDetalleActual;
+    const nombreMes = nombreMesLegible(mes);
+    const bcv = state.tasas.tasa_bcv || 875;
+
+    const headerEl = document.getElementById("modal-cat-header-content");
+    const stripEl = document.getElementById("modal-cat-summary-strip");
+    const tbodyEl = document.getElementById("tbody-modal-categoria-tx");
+    const footerEl = document.getElementById("modal-cat-footer-actions");
+    if (!headerEl || !stripEl || !tbodyEl || !footerEl) return;
+
+    let titulo = "";
+    let subtitulo = "";
+    let categoriasIncluidas = [];
+    let presupuestoTopeUsd = 0;
+
+    if (tipoFiltro === "CATEGORIA") {
+      const cat = state.categorias.find(c => c.codigo === codigoFiltro);
+      if (cat) {
+        titulo = `${cat.icono || "📌"} ${cat.nombre} — Periodo: ${nombreMes}`;
+        subtitulo = cat.notas || "Transacciones del periodo seleccionado. Puedes mover cualquier gasto a otra categoría o confirmarlo.";
+        categoriasIncluidas = [cat.codigo];
+        presupuestoTopeUsd = Number(cat.presupuesto_mensual_usd) || 0;
+      }
+    } else if (tipoFiltro === "BLOQUE") {
+      const nombresBloques = {
+        BLOQUE_A_VITALES: "🏠 Sección Vitales: Casa, Mercado, Escuela y Carro",
+        BLOQUE_D_FUTURO_DEUDAS: "💳 Sección Deudas y Fondo de Paz",
+        BLOQUE_C_ESTILO_VIDA: "🎡 Sección Esparcimiento y Recreación Familiar",
+        BLOQUE_B_SOBRES: "🎓 Sección Apartados Escuela y Salud"
+      };
+      const cats = state.categorias.filter(c => c.bloque === codigoFiltro);
+      titulo = `${nombresBloques[codigoFiltro] || codigoFiltro} — Periodo: ${nombreMes}`;
+      subtitulo = "Todas las transacciones registradas en las categorías de esta sección durante el mes activo.";
+      categoriasIncluidas = cats.map(c => c.codigo);
+      presupuestoTopeUsd = cats.reduce((acc, c) => acc + (Number(c.presupuesto_mensual_usd) || 0), 0);
+    } else {
+      titulo = `👤 Todas las Transacciones de Presupuesto Personal — ${nombreMes}`;
+      subtitulo = "Auditoría completa de todos tus gastos y apartados personales del mes seleccionado.";
+      categoriasIncluidas = state.categorias.map(c => c.codigo);
+      presupuestoTopeUsd = state.categorias.reduce((acc, c) => acc + (Number(c.presupuesto_mensual_usd) || 0), 0);
+    }
+
+    const setCodigos = new Set(categoriasIncluidas);
+    const txsPeriodo = (state.transacciones || []).filter(tx => {
+      const mismoMes = String(tx.fecha || "").substring(0, 7) === mes;
+      if (!mismoMes) return false;
+      if (tx.entidad_codigo !== "PERSONAL") return false;
+      if (
+        tx.tipo_movimiento !== "GASTO_PERSONAL" &&
+        tx.tipo_movimiento !== "APORTE_SOBRE" &&
+        tx.tipo_movimiento !== "GASTO_CRUZADO_NEGOCIO_PAGA_SOCIO"
+      ) {
+        return false;
+      }
+      return setCodigos.has(tx.categoria_codigo);
+    });
+
+    const totalGastadoUsd = txsPeriodo.reduce((acc, t) => acc + Number(t.monto_usd_bcv || t.monto_usd_real || 0), 0);
+    const totalGastadoUsdt = txsPeriodo.reduce((acc, t) => acc + Number(t.monto_usd_real || 0), 0);
+    const restanteUsd = Math.max(0, presupuestoTopeUsd - totalGastadoUsd);
+    const confirmadasCount = txsPeriodo.filter(t => t.estado_conciliacion === "CONFIRMADO").length;
+
+    const catPrincipal = categoriasIncluidas[0] || "PER_CASA";
+
+    headerEl.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; padding-right:28px;">
+        <div>
+          <h2 id="modal-cat-title" style="font-size:18px; font-weight:800; color:#f8fafc; margin-bottom:4px;">
+            ${titulo}
+          </h2>
+          <p style="font-size:12.5px; color:#94a3b8; margin:0;">
+            ${subtitulo}
+          </p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="sync-action-btn" style="background:rgba(16,185,129,0.2); border:1px solid #10b981; color:#34d399; font-size:12px;" onclick="window.openNuevoMovimientoParaCategoria('${catPrincipal}')">
+            ➕ Agregar Gasto Aquí
+          </button>
+          ${tipoFiltro === "CATEGORIA" ? `
+            <button type="button" class="sync-action-btn" style="background:rgba(99,102,241,0.2); border:1px solid #6366f1; color:#a5b4fc; font-size:12px;" onclick="window.editarTopeCategoriaPrompt('${catPrincipal}'); window.refrescarModalDetalleCategoriaSiAbierto();">
+              ✏️ Cambiar Tope Mensual
+            </button>
+          ` : ""}
+        </div>
+      </div>
+    `;
+
+    stripEl.innerHTML = `
+      <div style="background:#0f172a; border:1px solid var(--border); padding:10px 12px; border-radius:10px;">
+        <div style="font-size:10.5px; color:#94a3b8; font-weight:700;">TOPE MENSUAL (${nombreMes.toUpperCase()})</div>
+        <div style="font-size:17px; font-weight:800; color:#f8fafc; margin-top:2px;">${fmtUSD(presupuestoTopeUsd)}</div>
+      </div>
+      <div style="background:#0f172a; border:1px solid var(--border); padding:10px 12px; border-radius:10px;">
+        <div style="font-size:10.5px; color:#94a3b8; font-weight:700;">EJECUTADO EN EL PERIODO</div>
+        <div style="font-size:17px; font-weight:800; color:#38bdf8; margin-top:2px;">${fmtUSD(totalGastadoUsd)} <span style="font-size:11px; color:#94a3b8;">(${fmtUSD(totalGastadoUsdt)} USDT)</span></div>
+      </div>
+      <div style="background:#0f172a; border:1px solid var(--border); padding:10px 12px; border-radius:10px;">
+        <div style="font-size:10.5px; color:#94a3b8; font-weight:700;">RESTANTE DEL MES</div>
+        <div style="font-size:17px; font-weight:800; color:#34d399; margin-top:2px;">${fmtUSD(restanteUsd)} <span style="font-size:11px; color:#94a3b8;">(${fmtVES(restanteUsd * bcv)})</span></div>
+      </div>
+      <div style="background:#0f172a; border:1px solid var(--border); padding:10px 12px; border-radius:10px;">
+        <div style="font-size:10.5px; color:#94a3b8; font-weight:700;">ESTADO DE CONCILIACIÓN</div>
+        <div style="font-size:17px; font-weight:800; color:#fbbf24; margin-top:2px;">${confirmadasCount} / ${txsPeriodo.length} <span style="font-size:11.5px; color:#cbd5e1;">confirmadas</span></div>
+      </div>
+    `;
+
+    if (txsPeriodo.length === 0) {
+      tbodyEl.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center; padding:28px 16px; color:#94a3b8;">
+            <div style="font-size:14px; font-weight:700; color:#e2e8f0; margin-bottom:6px;">
+              📭 No hay transacciones registradas en esta categoría durante ${nombreMes}.
+            </div>
+            <div style="font-size:12px; margin-bottom:12px;">
+              Puedes registrar un nuevo gasto aquí o mover una transacción desde otra categoría.
+            </div>
+            <button type="button" class="sync-action-btn" style="margin:0 auto; background:rgba(16,185,129,0.2); border:1px solid #10b981; color:#34d399;" onclick="window.openNuevoMovimientoParaCategoria('${catPrincipal}')">
+              ➕ Registrar Gasto en esta Categoría Ahora
+            </button>
+          </td>
+        </tr>
+      `;
+    } else {
+      tbodyEl.innerHTML = txsPeriodo.map((tx, idx) => {
+        const txKey = tx.id ? String(tx.id) : `${tx.fecha}|${tx.concepto}|${tx.monto_origen}`;
+        const selectId = `select-move-cat-${idx}`;
+        const estaConfirmado = tx.estado_conciliacion === "CONFIRMADO";
+        const catActualObj = state.categorias.find(c => c.codigo === tx.categoria_codigo);
+        const montoOrigenStr = tx.moneda_origen === "VES"
+          ? fmtVES(tx.monto_origen)
+          : `${fmtUSD(tx.monto_origen)} (${tx.moneda_origen})`;
+        const montoUsdStr = fmtUSD(tx.monto_usd_bcv || tx.monto_usd_real || 0);
+
+        const opcionesCategorias = state.categorias.map(c =>
+          `<option value="${c.codigo}" ${c.codigo === tx.categoria_codigo ? "selected" : ""}>${c.icono || "📌"} ${c.nombre}</option>`
+        ).join("");
+
+        return `
+          <tr style="${estaConfirmado ? "background:rgba(16,185,129,0.06);" : ""}">
+            <td style="white-space:nowrap; font-weight:700; color:#e2e8f0;">
+              ${formatearDiaLegible(tx.fecha)}
+            </td>
+            <td>
+              <strong style="color:#f8fafc;">${tx.concepto}</strong>
+              <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+                Actual: <span style="color:#7dd3fc; font-weight:700;">${catActualObj ? `${catActualObj.icono} ${catActualObj.nombre}` : tx.categoria_codigo}</span>
+              </div>
+            </td>
+            <td style="font-weight:700; white-space:nowrap;">${montoOrigenStr}</td>
+            <td style="font-weight:800; color:#38bdf8; white-space:nowrap;">
+              ${montoUsdStr}
+              <div style="font-size:10.5px; color:#94a3b8; font-weight:500;">${fmtUSD(tx.monto_usd_real)} USDT</div>
+            </td>
+            <td>
+              ${estaConfirmado
+                ? `<span class="pill-tag pill-green">✅ Confirmado</span>`
+                : `<span class="pill-tag pill-amber">⏳ Por Confirmar</span>`
+              }
+            </td>
+            <td>
+              <select id="${selectId}" class="form-control" style="padding:5px 8px; font-size:12px; min-width:195px; background:#090d16;">
+                <optgroup label="👤 Categorías de Mi Presupuesto ($1,000)">
+                  ${opcionesCategorias}
+                </optgroup>
+                <optgroup label="🏢 Mover fuera de mi Presupuesto Personal">
+                  <option value="ENT_MAGIA_CON_K">🔮 Es gasto de Magia con K</option>
+                  <option value="ENT_PAPEL">📄 Es gasto de Papel B2B</option>
+                  <option value="PASE_EFECTIVO_ESPOSA">🤝 Fue Ayuda / Reembolso Efectivo</option>
+                </optgroup>
+              </select>
+            </td>
+            <td style="white-space:nowrap;">
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="sync-action-btn" style="padding:5px 9px; font-size:11.5px; background:rgba(99,102,241,0.22); border:1px solid #6366f1; color:#c7d2fe;" onclick="window.handleMoverTransaccionDesdeModal('${txKey.replace(/'/g, "\\'")}', '${selectId}')">
+                  🔄 Mover
+                </button>
+                <button type="button" class="sync-action-btn" style="padding:5px 9px; font-size:11.5px; background:${estaConfirmado ? "rgba(16,185,129,0.12)" : "rgba(16,185,129,0.28)"}; border:1px solid #10b981; color:#34d399;" onclick="window.handleConfirmarTransaccionDesdeModal('${txKey.replace(/'/g, "\\'")}')">
+                  ${estaConfirmado ? "✔️ OK" : "✅ Confirmar"}
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    const codigosJson = JSON.stringify(categoriasIncluidas).replace(/"/g, "'");
+    footerEl.innerHTML = `
+      <div style="font-size:12px; color:#94a3b8;">
+        💡 Al mover una transacción a otra categoría o negocio, tu disponible mensual se recalcula al instante en Supabase Cloud.
+      </div>
+      <div style="display:flex; gap:8px;">
+        ${txsPeriodo.length > 0 ? `
+          <button type="button" class="sync-action-btn" style="background:rgba(16,185,129,0.22); border:1px solid #10b981; color:#34d399;" onclick="window.confirmarTodasTransaccionesCategoriaCloud && window.confirmarTodasTransaccionesCategoriaCloud(${codigosJson}, '${mes}')">
+            ✅ Confirmar Todas (${txsPeriodo.length})
+          </button>
+        ` : ""}
+        <button type="button" class="sync-action-btn" style="background:rgba(148,163,184,0.15); border:1px solid #475569; color:#f1f5f9;" onclick="window.cerrarDetalleCategoriaModal()">
+          Cerrar Ventana
+        </button>
+      </div>
+    `;
+  }
+
+  function handleMoverTransaccionDesdeModal(txKey, selectId) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    const nuevoDestino = sel.value;
+    if (typeof window.moverTransaccionCategoriaCloud === "function") {
+      window.moverTransaccionCategoriaCloud(txKey, nuevoDestino);
+    }
+  }
+
+  function handleConfirmarTransaccionDesdeModal(txKey) {
+    if (typeof window.confirmarTransaccionCloud === "function") {
+      window.confirmarTransaccionCloud(txKey);
+    }
+  }
+
+  function openNuevoMovimientoParaCategoria(codigoCategoria) {
+    cerrarDetalleCategoriaModal();
+    const tipo = (codigoCategoria === "SOBRE_ESCUELA_CUOTAS" || codigoCategoria === "FUT_FONDO_PAZ")
+      ? "APORTE_SOBRE"
+      : "GASTO_PERSONAL";
+    openNuevoMovimientoModal(tipo);
+    const catSelect = document.getElementById("mov-categoria");
+    if (catSelect && codigoCategoria) {
+      catSelect.value = codigoCategoria;
+    }
+  }
+
   function renderAllFinanzas() {
     const resumen = calcularResumenGlobal();
     renderMainKPIs(resumen);
@@ -1445,6 +1755,13 @@
   window.editarTopeCategoriaPrompt = editarTopeCategoriaPrompt;
   window.editarProvisionFiscalPrompt = editarProvisionFiscalPrompt;
   window.editarSaldoBilleteraPrompt = editarSaldoBilleteraPrompt;
+  window.editarSalarioExternoPrompt = editarSalarioExternoPrompt;
+  window.abrirDetalleCategoriaModal = abrirDetalleCategoriaModal;
+  window.cerrarDetalleCategoriaModal = cerrarDetalleCategoriaModal;
+  window.refrescarModalDetalleCategoriaSiAbierto = refrescarModalDetalleCategoriaSiAbierto;
+  window.handleMoverTransaccionDesdeModal = handleMoverTransaccionDesdeModal;
+  window.handleConfirmarTransaccionDesdeModal = handleConfirmarTransaccionDesdeModal;
+  window.openNuevoMovimientoParaCategoria = openNuevoMovimientoParaCategoria;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", renderAllFinanzas);

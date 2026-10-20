@@ -180,7 +180,7 @@
           <div>
             <div class="panel-title" id="titulo-tablero-mensual">👤 Presupuesto Mensual Personal — Octubre 2026 (Vista 100% Mensual sin Acumulados Globales)</div>
             <div class="panel-subtitle">
-              Cada categoría muestra <strong>únicamente lo presupuestado y gastado en el mes seleccionado</strong>. Tope Mensual Base Cero: <strong>$600.00 USD/mes</strong> ($350 Magia con K + $250 Papel).
+              <strong>💡 Toca cualquier categoría o sección</strong> para abrir la ventana con las transacciones del periodo, día, monto y opciones para mover de categoría o confirmar. Ingreso Base: <strong>Salario Trabajo por Fuera ($1,000.00 USD/mes)</strong> — Sin salarios de Magia ni Papel.
             </div>
           </div>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -211,7 +211,7 @@
           <div>
             <div class="panel-title">📈 Resúmenes Mensuales de la Evolución (Comparativa Mes a Mes)</div>
             <div class="panel-subtitle">
-              Evolución histórica mensual de tus 4 categorías principales (<strong>Casa</strong>, <strong>Mercado</strong>, <strong>Escuela de Hija</strong>, <strong>Esparcimiento</strong>), ahorro mensual logrado y facturación mensual de <strong>Magia con K</strong> y <strong>Papel</strong>. Haz clic en cualquier mes para inspeccionarlo.
+              Evolución histórica mensual de tus categorías principales (<strong>Casa</strong>, <strong>Mercado</strong>, <strong>Escuela</strong>, <strong>Carro</strong>, <strong>Deudas</strong> y <strong>Esparcimiento</strong>) frente a tu salario mensual de <strong>$1,000.00 USD</strong>, más resultados independientes de <strong>Magia con K</strong> y <strong>Papel</strong>.
             </div>
           </div>
         </div>
@@ -221,12 +221,13 @@
             <thead>
               <tr>
                 <th>Mes</th>
-                <th>🏠 Casa<br><span style="font-size:10px; color:#94a3b8;">(Tope $145)</span></th>
-                <th>🛒 Mercado<br><span style="font-size:10px; color:#94a3b8;">(Tope $210)</span></th>
-                <th>🎒 Escuela + Cuotas<br><span style="font-size:10px; color:#94a3b8;">(Tope $100)</span></th>
-                <th>🎡 Esparcimiento<br><span style="font-size:10px; color:#94a3b8;">(Tope $80)</span></th>
-                <th>🏥 Salud / 🛡️ Paz<br><span style="font-size:10px; color:#94a3b8;">(Tope $65)</span></th>
-                <th>Total Gasto Mes<br><span style="font-size:10px; color:#94a3b8;">vs Presup. $600</span></th>
+                <th>🏠 Casa<br><span style="font-size:10px; color:#94a3b8;">(Tope $180)</span></th>
+                <th>🛒 Mercado<br><span style="font-size:10px; color:#94a3b8;">(Tope $260)</span></th>
+                <th>🎒 Escuela + Cuotas<br><span style="font-size:10px; color:#94a3b8;">(Tope $110)</span></th>
+                <th>🚗 Carro<br><span style="font-size:10px; color:#94a3b8;">(Tope $130)</span></th>
+                <th>💳 Deudas<br><span style="font-size:10px; color:#94a3b8;">(Tope $160)</span></th>
+                <th>🎡 Esparc. / Salud / Paz<br><span style="font-size:10px; color:#94a3b8;">(Tope $160)</span></th>
+                <th>Total Gasto Mes<br><span style="font-size:10px; color:#94a3b8;">vs Salario $1,000</span></th>
                 <th>Disponible / Balance Mes</th>
                 <th>🔮 Magia (Mes)</th>
                 <th>📄 Papel (Mes)</th>
@@ -250,7 +251,7 @@
           <div class="panel-header">
             <div>
               <div class="panel-title">📊 Distribución del Presupuesto Mensual por Bloques</div>
-              <div class="panel-subtitle">Asignación mensual de tus $600.00 USD entre Vitales, Sobres, Esparcimiento y Ahorro</div>
+              <div class="panel-subtitle">Asignación mensual de tu salario de $1,000.00 USD entre Vitales (Casa/Mercado/Escuela/Carro), Deudas, Sobres y Esparcimiento</div>
             </div>
           </div>
           <div style="height: 270px; position: relative;">
@@ -685,6 +686,44 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE INSPECCIÓN DE CATEGORÍA / SECCIÓN DEL PRESUPUESTO (VER TRANSACCIONES, MOVER O CONFIRMAR) -->
+  <div class="modal-overlay" id="modal-detalle-categoria" role="dialog" aria-modal="true" aria-labelledby="modal-cat-title">
+    <div class="modal-card" style="max-width: 920px; width: 95%;">
+      <button type="button" class="modal-close" onclick="window.cerrarDetalleCategoriaModal()">&times;</button>
+
+      <div id="modal-cat-header-content">
+        <!-- Inyectado dinámicamente por app.js -->
+      </div>
+
+      <div id="modal-cat-summary-strip" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 14px 0;">
+        <!-- Inyectado dinámicamente por app.js -->
+      </div>
+
+      <div class="table-wrap" style="max-height: 430px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Día / Fecha</th>
+              <th>Concepto / Detalle del Gasto</th>
+              <th>Monto Pagado</th>
+              <th>Equiv. USD</th>
+              <th>Estado</th>
+              <th>Mover a otra Categoría / Bolsillo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-modal-categoria-tx">
+            <!-- Inyectado dinámicamente por app.js -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="modal-cat-footer-actions" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px;">
+        <!-- Inyectado dinámicamente por app.js -->
+      </div>
     </div>
   </div>
 

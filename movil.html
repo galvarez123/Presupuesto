@@ -286,6 +286,8 @@
         <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Esto pertenece a Casa compra en Farmatodo')">🗣️ "Es de Casa / Farmatodo"</button>
         <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Pertenece a Mercado supermercado')">🗣️ "Va para Mercado"</button>
         <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Escuela de hija mensualidad 75 dólares')">🗣️ "Escuela de Hija $75"</button>
+        <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Gasto de Carro gasolina o repuesto')">🗣️ "Carro / Gasolina"</button>
+        <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Abono o pago de Deudas')">🗣️ "Pago de Deuda"</button>
         <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Pertenece a Esparcimiento salida familiar')">🗣️ "Esparcimiento"</button>
         <button type="button" class="voice-chip" onclick="window.procesarInstruccionDeVoz('Gasto de Magia con K pagado con mi cuenta personal')">🗣️ "Magia con mi cuenta"</button>
       </div>
@@ -330,14 +332,20 @@
         <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="PER_ESCUELA_HIJA" onclick="window.seleccionarDestinoRapido('PERSONAL', 'PER_ESCUELA_HIJA')">
           <span>🎒</span> <span>Escuela Hija ($75)</span>
         </button>
-        <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="SOBRE_ESCUELA_CUOTAS" onclick="window.seleccionarDestinoRapido('PERSONAL', 'SOBRE_ESCUELA_CUOTAS')">
-          <span>🎓</span> <span>Cuotas Escuela</span>
+        <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="PER_CARRO" onclick="window.seleccionarDestinoRapido('PERSONAL', 'PER_CARRO')">
+          <span>🚗</span> <span>Carro / Gasolina</span>
+        </button>
+        <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="PER_DEUDAS" onclick="window.seleccionarDestinoRapido('PERSONAL', 'PER_DEUDAS')">
+          <span>💳</span> <span>Deudas / Abonos</span>
         </button>
         <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="PER_ESPARCIMIENTO" onclick="window.seleccionarDestinoRapido('PERSONAL', 'PER_ESPARCIMIENTO')">
           <span>🎡</span> <span>Esparcimiento</span>
         </button>
+        <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="SOBRE_ESCUELA_CUOTAS" onclick="window.seleccionarDestinoRapido('PERSONAL', 'SOBRE_ESCUELA_CUOTAS')">
+          <span>🎓</span> <span>Cuotas Escuela</span>
+        </button>
         <button type="button" class="quick-cat-btn" data-entidad="PERSONAL" data-cat="SOBRE_SALUD_VEHICULO" onclick="window.seleccionarDestinoRapido('PERSONAL', 'SOBRE_SALUD_VEHICULO')">
-          <span>🏥</span> <span>Salud / Imprevistos</span>
+          <span>🏥</span> <span>Salud / Odontología</span>
         </button>
         <button type="button" class="quick-cat-btn" data-entidad="MAGIA_CON_K" data-cat="" onclick="window.seleccionarDestinoRapido('MAGIA_CON_K', '')">
           <span>🔮</span> <span>Magia con K</span>
@@ -363,9 +371,11 @@
             <option value="PER_CASA">🏠 Casa (Servicios / Farmatodo)</option>
             <option value="PER_MERCADO">🛒 Mercado (Supermercado / TDD)</option>
             <option value="PER_ESCUELA_HIJA">🎒 Escuela de Hija ($75)</option>
-            <option value="SOBRE_ESCUELA_CUOTAS">🎓 Cuotas Especiales Escuela</option>
+            <option value="PER_CARRO">🚗 Carro (Gasolina / Repuestos)</option>
+            <option value="PER_DEUDAS">💳 Deudas (Pagos / Cuotas)</option>
             <option value="PER_ESPARCIMIENTO">🎡 Esparcimiento</option>
-            <option value="SOBRE_SALUD_VEHICULO">🏥 Salud / Imprevistos</option>
+            <option value="SOBRE_ESCUELA_CUOTAS">🎓 Cuotas Especiales Escuela</option>
+            <option value="SOBRE_SALUD_VEHICULO">🏥 Salud / Odontología</option>
             <option value="FUT_FONDO_PAZ">🛡️ Fondo de Paz (USDT)</option>
           </select>
         </div>

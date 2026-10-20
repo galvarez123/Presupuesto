@@ -522,23 +522,47 @@
         categoria = "PER_MERCADO";
         comercioDetectado = "Mercado";
       } else if (
+        lower.includes("carro") ||
+        lower.includes("vehículo") ||
+        lower.includes("vehiculo") ||
+        lower.includes("caucho") ||
+        lower.includes("taller") ||
+        lower.includes("mecánico") ||
+        lower.includes("mecanico") ||
+        lower.includes("repuesto") ||
+        lower.includes("aceite") ||
+        lower.includes("batería") ||
+        lower.includes("bateria") ||
+        lower.includes("estacionamiento") ||
+        lower.includes("gasolina")
+      ) {
+        categoria = "PER_CARRO";
+        aplicaDesgravamen = false;
+        comercioDetectado = "Carro / Vehículo";
+      } else if (
+        lower.includes("deuda") ||
+        lower.includes("deudas") ||
+        lower.includes("préstamo") ||
+        lower.includes("prestamo") ||
+        lower.includes("abono deuda") ||
+        lower.includes("pago deuda") ||
+        lower.includes("compromiso")
+      ) {
+        categoria = "PER_DEUDAS";
+        aplicaDesgravamen = false;
+        comercioDetectado = "Pago de Deuda";
+      } else if (
         lower.includes("salud") ||
         lower.includes("médico") ||
         lower.includes("medico") ||
         lower.includes("odont") ||
         lower.includes("clínica") ||
         lower.includes("clinica") ||
-        lower.includes("locatel") ||
-        lower.includes("carro") ||
-        lower.includes("vehículo") ||
-        lower.includes("vehiculo") ||
-        lower.includes("caucho") ||
-        lower.includes("taller") ||
-        lower.includes("gasolina")
+        lower.includes("locatel")
       ) {
         categoria = "SOBRE_SALUD_VEHICULO";
-        aplicaDesgravamen = !lower.includes("carro") && !lower.includes("caucho") && !lower.includes("gasolina");
-        comercioDetectado = "Salud / Vehículo";
+        aplicaDesgravamen = true;
+        comercioDetectado = "Salud / Odontología";
       } else if (
         lower.includes("fondo de paz") ||
         lower.includes("emergencia") ||
@@ -612,9 +636,11 @@
       PER_CASA: "🏠 Casa (Servicios / Farmatodo)",
       PER_MERCADO: "🛒 Mercado",
       PER_ESCUELA_HIJA: "🎒 Escuela de Hija ($75)",
+      PER_CARRO: "🚗 Carro (Gasolina / Repuestos)",
+      PER_DEUDAS: "💳 Deudas (Pagos / Cuotas)",
       SOBRE_ESCUELA_CUOTAS: "🎓 Cuotas Especiales Escuela",
       PER_ESPARCIMIENTO: "🎡 Esparcimiento",
-      SOBRE_SALUD_VEHICULO: "🏥 Salud / Imprevistos",
+      SOBRE_SALUD_VEHICULO: "🏥 Salud / Odontología",
       FUT_FONDO_PAZ: "🛡️ Fondo de Paz"
     };
     return mapaCat[datos.categoria] || "Presupuesto Personal";
