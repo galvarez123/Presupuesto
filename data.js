@@ -5,6 +5,7 @@
 
 window.FINANZAS_STATE = {
   entidadActiva: "TODOS", // 'TODOS', 'PERSONAL', 'MAGIA_CON_K', 'PAPEL'
+  mesActivo: "2026-10",   // Filtro estricto mensual YYYY-MM (Sin acumulados globales)
   tasas: {
     tasa_bcv: 875.00,
     tasa_binance: 1015.00,
@@ -15,18 +16,26 @@ window.FINANZAS_STATE = {
   },
   tunelLive: {
     tunel_status: "ONLINE_REALTIME",
+    mes_actual: "2026-10",
     magia_con_k: {
       modelos_activos: 37,
       stock_fisico: 94,
       stock_transito: 141,
       costo_inventario_usd: 173.01,
       pvp_inventario_usd: 1462.00,
-      ventas_registradas: 136,
-      unidades_vendidas: 136,
-      ingresos_brutos_usd: 1049.62,
-      ingresos_brutos_ves: 1065361.65,
-      provision_alcaldia_sugerida_usd: 15.74,
-      sueldo_fundador_asignado_usd: 350.00
+      ventas_registradas: 10,
+      unidades_vendidas: 10,
+      ingresos_brutos_usd: 132.52,
+      ingresos_brutos_ves: 134499.29,
+      provision_alcaldia_sugerida_usd: 1.99,
+      sueldo_fundador_asignado_usd: 350.00,
+      por_mes: [
+        { mes: "2026-10", ventas_registradas: 10, unidades_vendidas: 10, ingresos_brutos_usd: 132.52, ingresos_brutos_ves: 134499.29 },
+        { mes: "2026-09", ventas_registradas: 11, unidades_vendidas: 11, ingresos_brutos_usd: 123.08, ingresos_brutos_ves: 124904.95 },
+        { mes: "2026-08", ventas_registradas: 23, unidades_vendidas: 23, ingresos_brutos_usd: 237.71, ingresos_brutos_ves: 241259.06 },
+        { mes: "2026-07", ventas_registradas: 31, unidades_vendidas: 31, ingresos_brutos_usd: 308.85, ingresos_brutos_ves: 313444.08 },
+        { mes: "2026-06", ventas_registradas: 18, unidades_vendidas: 18, ingresos_brutos_usd: 157.67, ingresos_brutos_ves: 160029.60 }
+      ]
     },
     papel: {
       skus_activos: 2,
@@ -34,14 +43,21 @@ window.FINANZAS_STATE = {
       stock_agua: 52,
       valor_stock_landed_usd: 514.85,
       valor_stock_pvp_usd: 1000.00,
-      despachos_count: 23,
-      unidades_despachadas: 88,
-      total_facturado_usd: 721.00,
-      total_cobrado_usd: 762.00,
-      balance_flujo_caja_usd: 41.00,
+      despachos_count: 3,
+      unidades_despachadas: 5,
+      total_facturado_usd: 40.00,
+      total_cobrado_usd: 41.00,
+      balance_flujo_caja_usd: 1.00,
       clientes_activos: 4,
-      provision_alcaldia_sugerida_usd: 14.42,
-      sueldo_fundador_asignado_usd: 250.00
+      provision_alcaldia_sugerida_usd: 0.80,
+      sueldo_fundador_asignado_usd: 250.00,
+      por_mes: [
+        { mes: "2026-10", despachos_count: 3, unidades_despachadas: 5, total_facturado_usd: 40.00, total_cobrado_usd: 41.00 },
+        { mes: "2026-09", despachos_count: 2, unidades_despachadas: 9, total_facturado_usd: 72.00, total_cobrado_usd: 68.00 },
+        { mes: "2026-08", despachos_count: 4, unidades_despachadas: 15, total_facturado_usd: 120.00, total_cobrado_usd: 123.00 },
+        { mes: "2026-07", despachos_count: 7, unidades_despachadas: 28, total_facturado_usd: 223.00, total_cobrado_usd: 260.00 },
+        { mes: "2026-06", despachos_count: 7, unidades_despachadas: 31, total_facturado_usd: 266.00, total_cobrado_usd: 270.00 }
+      ]
     }
   },
   entidades: [

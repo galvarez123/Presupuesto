@@ -118,6 +118,17 @@
       </div>
 
       <div class="rate-controls-inline">
+        <div class="rate-mini-box" style="border-color: #10b981; background: rgba(16, 185, 129, 0.12);" title="Selecciona el mes para ver exclusivamente los ingresos y gastos de ese periodo mensual">
+          <span style="color: #6ee7b7; font-weight: 800;">🗓️ Mes Activo:</span>
+          <select id="select-mes-activo" onchange="window.cambiarMesActivo(this.value)" style="background: #090d16; border: 1px solid #10b981; color: #f8fafc; border-radius: 6px; padding: 4px 8px; font-weight: 800; font-size: 12.5px; cursor: pointer;">
+            <option value="2026-10" selected>Octubre 2026 (Actual)</option>
+            <option value="2026-09">Septiembre 2026</option>
+            <option value="2026-08">Agosto 2026</option>
+            <option value="2026-07">Julio 2026</option>
+            <option value="2026-06">Junio 2026</option>
+            <option value="2026-11">Noviembre 2026</option>
+          </select>
+        </div>
         <div class="rate-mini-box" title="Tasa Oficial BCV (Base legal para facturas, SENIAT y pagos en Bs)">
           <span style="color: #94a3b8;">BCV (Bs/$):</span>
           <input type="number" id="input-tasa-bcv" value="875" step="1" onchange="window.recalcularTasasManual()">
@@ -136,24 +147,24 @@
       </div>
     </div>
 
-    <!-- TARJETAS KPI GLOBALES -->
+    <!-- TARJETAS KPI ESTRICTAMENTE MENSUALES -->
     <div class="kpi-grid" id="main-kpi-grid">
-      <!-- Renderizado dinámicamente por app.js -->
+      <!-- Renderizado dinámicamente por app.js según el mesActivo -->
     </div>
 
     <!-- NAVEGACIÓN DE PESTAÑAS -->
     <nav class="tabs-nav" aria-label="Secciones del Sistema de Presupuesto">
       <button type="button" class="tab-btn active" data-tab="tab-personal" onclick="window.activarTab('tab-personal')">
-        <span>💰</span> 1. Mi Presupuesto Personal (Base Cero &amp; Sobres)
+        <span>💰</span> 1. Presupuesto del Mes &amp; Evolución Mensual
       </button>
       <button type="button" class="tab-btn" data-tab="tab-tunel" onclick="window.activarTab('tab-tunel')">
-        <span>🌉</span> 2. Túnel Emprendimientos (Magia con K &amp; Papel) &amp; Cruces
+        <span>🌉</span> 2. Túnel Mensual (Magia con K &amp; Papel) &amp; Cruces
       </button>
       <button type="button" class="tab-btn" data-tab="tab-fiscal" onclick="window.activarTab('tab-fiscal')">
         <span>⚖️</span> 3. Legalidad y Bóveda Fiscal Venezuela (SENIAT / Alcaldía)
       </button>
       <button type="button" class="tab-btn" data-tab="tab-libro" onclick="window.activarTab('tab-libro')">
-        <span>📒</span> 4. Billeteras Separadas &amp; Libro Mayor Bimonetario
+        <span>📒</span> 4. Billeteras Separadas &amp; Libro del Mes
       </button>
       <button type="button" class="tab-btn" data-tab="tab-gmail" onclick="window.activarTab('tab-gmail')">
         <span>📧</span> 5. Extractor de Facturas Gmail (Auto-Gastos)
@@ -161,46 +172,85 @@
     </nav>
 
     <!-- ====================================================================== -->
-    <!-- PESTAÑA 1: GESTIÓN DE PRESUPUESTO PERSONAL (BASE CERO & SOBRES)        -->
+    <!-- PESTAÑA 1: GESTIÓN DE PRESUPUESTO MENSUAL Y EVOLUCIÓN MES A MES         -->
     <!-- ====================================================================== -->
     <section id="tab-personal" class="tab-content active">
       <div class="panel" style="border-color: rgba(16, 185, 129, 0.4); background: linear-gradient(180deg, rgba(16, 185, 129, 0.06) 0%, var(--bg-card) 100%);">
         <div class="panel-header">
           <div>
-            <div class="panel-title">👤 Tablero Maestro de Presupuesto Personal (Metodología Base Cero)</div>
+            <div class="panel-title" id="titulo-tablero-mensual">👤 Presupuesto Mensual Personal — Octubre 2026 (Vista 100% Mensual sin Acumulados Globales)</div>
             <div class="panel-subtitle">
-              Tu ingreso personal proviene del <strong>Sueldo de Fundador Fijo</strong> asignado desde <strong>Magia con K ($350)</strong> + <strong>Papel ($250)</strong> = <strong>$600.00 USD/mes</strong>. Cada dólar tiene una misión asignada antes de gastar.
+              Cada categoría muestra <strong>únicamente lo presupuestado y gastado en el mes seleccionado</strong>. Tope Mensual Base Cero: <strong>$600.00 USD/mes</strong> ($350 Magia con K + $250 Papel).
             </div>
           </div>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <span class="pill-tag pill-green" id="badge-ecuacion-base-cero">Base Cero: $0.00 sin asignar</span>
             <button type="button" class="sync-action-btn" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399;" onclick="window.openNuevoMovimientoModal('GASTO_PERSONAL')">
-              ➕ Registrar Gasto Personal
+              ➕ Registrar Gasto del Mes
             </button>
             <button type="button" class="sync-action-btn" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #7dd3fc;" onclick="window.openNuevoMovimientoModal('APORTE_SOBRE')">
-              🏦 Aportar a Sobre / Fondo Paz
+              🏦 Aportar a Sobre del Mes
             </button>
           </div>
         </div>
 
-        <!-- Barra de Salud Personal y Pacing -->
+        <!-- Barra de Salud Mensual y Pacing -->
         <div id="personal-health-strip" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 18px;">
           <!-- Inyectado por app.js -->
         </div>
 
-        <!-- Los 4 Bloques del Presupuesto Personal -->
+        <!-- Los 4 Bloques del Presupuesto Mensual -->
         <div class="grid-2" id="personal-budget-blocks">
           <!-- Inyectado por app.js -->
         </div>
       </div>
 
-      <!-- Gráficos de Presupuesto Personal -->
+      <!-- NUEVA SECCIÓN: RESÚMENES MENSUALES DE LA EVOLUCIÓN (MES A MES) -->
+      <div class="panel" style="border-color: rgba(56, 189, 248, 0.45); background: linear-gradient(180deg, rgba(56, 189, 248, 0.05) 0%, var(--bg-card) 100%);">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">📈 Resúmenes Mensuales de la Evolución (Comparativa Mes a Mes)</div>
+            <div class="panel-subtitle">
+              Evolución histórica mensual de tus 4 categorías principales (<strong>Casa</strong>, <strong>Mercado</strong>, <strong>Escuela de Hija</strong>, <strong>Esparcimiento</strong>), ahorro mensual logrado y facturación mensual de <strong>Magia con K</strong> y <strong>Papel</strong>. Haz clic en cualquier mes para inspeccionarlo.
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-bottom: 18px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th>🏠 Casa<br><span style="font-size:10px; color:#94a3b8;">(Tope $145)</span></th>
+                <th>🛒 Mercado<br><span style="font-size:10px; color:#94a3b8;">(Tope $210)</span></th>
+                <th>🎒 Escuela + Cuotas<br><span style="font-size:10px; color:#94a3b8;">(Tope $100)</span></th>
+                <th>🎡 Esparcimiento<br><span style="font-size:10px; color:#94a3b8;">(Tope $80)</span></th>
+                <th>🏥 Salud / 🛡️ Paz<br><span style="font-size:10px; color:#94a3b8;">(Tope $65)</span></th>
+                <th>Total Gasto Mes<br><span style="font-size:10px; color:#94a3b8;">vs Presup. $600</span></th>
+                <th>Disponible / Balance Mes</th>
+                <th>🔮 Magia (Mes)</th>
+                <th>📄 Papel (Mes)</th>
+                <th>Ver Mes</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-evolucion-mensual">
+              <!-- Inyectado por app.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <div style="height: 260px; position: relative;">
+          <canvas id="chart-evolucion-mensual"></canvas>
+        </div>
+      </div>
+
+      <!-- Gráficos del Mes Activo -->
       <div class="grid-2">
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">📊 Distribución Base Cero por Bloques Vitales</div>
-              <div class="panel-subtitle">Equilibrio entre Necesidades (Bloque A), Sobres Anuales (B), Estilo de Vida (C) y Futuro (D)</div>
+              <div class="panel-title">📊 Distribución del Presupuesto Mensual por Bloques</div>
+              <div class="panel-subtitle">Asignación mensual de tus $600.00 USD entre Vitales, Sobres, Esparcimiento y Ahorro</div>
             </div>
           </div>
           <div style="height: 270px; position: relative;">
@@ -211,8 +261,8 @@
         <div class="panel">
           <div class="panel-header">
             <div>
-              <div class="panel-title">🚦 Semáforo de Ejecución Mensual por Categoría (USD)</div>
-              <div class="panel-subtitle">Presupuesto Mensual vs. Gasto Acumulado del Mes</div>
+              <div class="panel-title">🚦 Ejecución del Mes Seleccionado por Categoría (USD)</div>
+              <div class="panel-subtitle">Tope Mensual vs. Gasto Ejecutado exclusivamente en el mes activo</div>
             </div>
           </div>
           <div style="height: 270px; position: relative;">
