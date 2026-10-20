@@ -452,8 +452,8 @@
         </div>
         <div style="background:#0f172a; border:1px solid var(--border); padding:12px 14px; border-radius:10px;">
           <div style="font-size:11px; color:#94a3b8; font-weight:700;">DISPONIBLE RESTANTE DEL MES</div>
-          <div style="font-size:19px; font-weight:800; color:${disponibleMes >= 0 ? "#c084fc" : "#ef4444"}; margin-top:2px;">${fmtUSD(disponibleMes)}</div>
-          <div style="font-size:11.5px; color:#cbd5e1;">Equiv. BCV: ${fmtVES(Math.max(0, disponibleMes) * resumen.bcv)}</div>
+          <div style="font-size:19px; font-weight:800; color:${disponibleMes >= 0 ? "#c084fc" : "#ef4444"}; margin-top:2px;">${fmtUSD(disponibleMes)} USD</div>
+          <div style="font-size:11.5px; color:#cbd5e1;">Todo unificado en su Equivalente en USD ($)</div>
         </div>
         <div style="background:#0f172a; border:1px solid var(--border); padding:12px 14px; border-radius:10px; cursor:pointer;" onclick="window.abrirDetalleCategoriaModal('CATEGORIA', 'PER_DEUDAS')">
           <div style="font-size:11px; color:#94a3b8; font-weight:700;">🚗 CARRO + 💳 DEUDAS (${resumen.nombreMesActivo.toUpperCase()})</div>
@@ -515,9 +515,7 @@
           statusTag = `<span class="pill-tag pill-amber">🟡 ${pct}% del mes (${numMovs} movs)</span>`;
         }
 
-        const badgeMoneda = c.moneda_optima === "VES_BCV"
-          ? `<span class="pill-tag pill-green">Pagar en VES (BCV)</span>`
-          : `<span class="pill-tag pill-blue">USDT / USD</span>`;
+        const badgeMoneda = `<span class="pill-tag pill-blue">💵 Equivalente USD</span>`;
 
         const badgeIslr = c.aplica_desgravamen_islr
           ? `<span class="pill-tag pill-purple">🧾 Desgravamen ISLR</span>`
@@ -538,8 +536,8 @@
                 <div style="font-size:14.5px; font-weight:800; color:#f8fafc;">
                   ${fmtUSD(gast)} <span style="color:#94a3b8; font-weight:500;">/ ${fmtUSD(pres)} mes</span>
                 </div>
-                <div style="font-size:11px; color:#34d399; font-weight:700;">
-                  Restante mes: ${fmtUSD(disp)} (${fmtVES(disp * resumen.bcv)})
+                <div style="font-size:11px; color:${disp > 0 ? "#34d399" : "#f87171"}; font-weight:700;">
+                  Restante mes: ${fmtUSD(disp)} USD
                 </div>
               </div>
             </div>
@@ -1079,7 +1077,8 @@
             : `<span class="pill-tag pill-blue">📄 Papel B2B</span>`;
 
         const esIngreso = tx.tipo_movimiento === "SUELDO_FUNDADOR" || tx.tipo_movimiento === "INGRESO_PERSONAL" || tx.tipo_movimiento === "INGRESO_NEGOCIO";
-        const montoOrigenStr = tx.moneda_origen === "VES" ? fmtVES(tx.monto_origen) : `${fmtUSD(tx.monto_origen)} (${tx.moneda_origen})`;
+        const montoUsdUnificado = Number(tx.monto_usd_bcv || tx.monto_usd_real || tx.monto_origen || 0);
+        const estaConfirmado = tx.estado_conciliacion === "CONFIRMADO";
 
         const tagsFiscales = [];
         if (tx.tiene_factura_fiscal) tagsFiscales.push(`<span class="pill-tag pill-blue">🧾 Factura Fiscal</span>`);
@@ -1096,13 +1095,14 @@
               <strong style="color:#f8fafc;">${tx.concepto}</strong>
               ${tx.categoria_codigo ? `<div style="font-size:11px; color:#94a3b8;">Categoría: ${tx.categoria_codigo}</div>` : ""}
             </td>
-            <td style="font-weight:700;">${montoOrigenStr}</td>
-            <td>${fmtUSD(tx.monto_usd_bcv)}</td>
-            <td style="font-weight:800; color:${esIngreso ? "#34d399" : "#f8fafc"};">
-              ${esIngreso ? "+" : "-"}${fmtUSD(tx.monto_usd_real)}
+            <td style="font-weight:800; font-size:14px; color:${esIngreso ? "#34d399" : "#38bdf8"};">
+              ${esIngreso ? "+" : "-"}${fmtUSD(montoUsdUnificado)} USD
             </td>
-            <td style="color:#34d399; font-weight:700;">
-              ${Number(tx.ahorro_cambiario_usd) > 0 ? `+${fmtUSD(tx.ahorro_cambiario_usd)}` : "—"}
+            <td>
+              ${estaConfirmado
+                ? `<span class="pill-tag pill-green">✅ Confirmado</span>`
+                : `<span class="pill-tag pill-amber">⏳ Por Confirmar</span>`
+              }
             </td>
             <td>${tagsFiscales.join(" ") || "<span style='color:#64748b;'>Estándar</span>"}</td>
           </tr>
@@ -1243,46 +1243,31 @@
 
   function previsualizarConversionModal() {
     const state = window.FINANZAS_STATE;
-    const moneda = document.getElementById("mov-moneda")?.value || "VES";
+    const moneda = document.getElementById("mov-moneda")?.value || "USD_CASH";
     const monto = Number(document.getElementById("mov-monto")?.value) || 0;
     const preview = document.getElementById("mov-preview-bimonetario");
     if (!preview) return;
 
     const bcv = state.tasas.tasa_bcv || 875;
-    const binance = state.tasas.tasa_binance || 1015;
 
     if (monto <= 0) {
-      preview.innerHTML = "Ingresa un monto para calcular su equivalencia a Tasa BCV y en USDT reales.";
+      preview.innerHTML = "Ingresa un monto. Todo se guardará unificado en su <strong>Equivalente en USD ($)</strong>.";
       return;
     }
 
     if (moneda === "VES") {
-      const usdBcv = bcv > 0 ? monto / bcv : 0;
-      const usdReal = binance > 0 ? monto / binance : 0;
-      const ahorro = Math.max(0, usdBcv - usdReal);
+      const usdEquiv = bcv > 0 ? monto / bcv : 0;
       preview.innerHTML = `
         <div style="display:flex; justify-content:space-between;">
-          <span>Equivalente Oficial BCV (${bcv} Bs/$):</span>
-          <strong>${fmtUSD(usdBcv)}</strong>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-top:4px;">
-          <span>Costo Real en Poder Adquisitivo USDT (${binance} Bs/USDT):</span>
-          <strong style="color:#38bdf8;">${fmtUSD(usdReal)} USDT</strong>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-top:4px; color:#34d399; font-weight:700;">
-          <span>✨ Ahorro Cambiario Ganado por pagar en Bs:</span>
-          <span>+${fmtUSD(ahorro)}</span>
+          <span>Monto en Bs convertido a Tasa (${bcv} Bs/$):</span>
+          <strong style="color:#34d399; font-size:15px;">${fmtUSD(usdEquiv)} USD (Se guardará en USD)</strong>
         </div>
       `;
     } else {
       preview.innerHTML = `
         <div style="display:flex; justify-content:space-between;">
-          <span>Monto Directo en Divisa / USDT:</span>
-          <strong style="color:#38bdf8;">${fmtUSD(monto)} (${moneda})</strong>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-top:4px; color:#94a3b8;">
-          <span>Equivalente Contable en Libros BCV:</span>
-          <span>${fmtVES(monto * bcv)}</span>
+          <span>Monto Equivalente Directo en Dólares:</span>
+          <strong style="color:#34d399; font-size:15px;">${fmtUSD(monto)} USD</strong>
         </div>
       `;
     }
@@ -1300,16 +1285,14 @@
     const categoria = document.getElementById("mov-categoria")?.value || null;
     const entidadCruce = document.getElementById("mov-entidad-cruce")?.value || "MAGIA_CON_K";
     const concepto = (document.getElementById("mov-concepto")?.value || "").trim();
-    const moneda = document.getElementById("mov-moneda")?.value || "VES";
-    const montoOrigen = Number(document.getElementById("mov-monto")?.value) || 0;
+    const moneda = document.getElementById("mov-moneda")?.value || "USD_CASH";
+    const montoInput = Number(document.getElementById("mov-monto")?.value) || 0;
 
     const tieneFactura = Boolean(document.getElementById("mov-factura-fiscal")?.checked);
     const aplicaDesgravamen = Boolean(document.getElementById("mov-desgravamen-islr")?.checked);
     const esHormiga = Boolean(document.getElementById("mov-gasto-hormiga")?.checked);
 
-    const usdBcv = moneda === "VES" ? (bcv > 0 ? Number((montoOrigen / bcv).toFixed(2)) : 0) : montoOrigen;
-    const usdReal = moneda === "VES" ? (binance > 0 ? Number((montoOrigen / binance).toFixed(2)) : 0) : montoOrigen;
-    const ahorro = moneda === "VES" ? Number(Math.max(0, usdBcv - usdReal).toFixed(2)) : 0;
+    const usdEquiv = moneda === "VES" ? (bcv > 0 ? Number((montoInput / bcv).toFixed(2)) : 0) : Number(montoInput.toFixed(2));
 
     const esCruce = tipo === "GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO" || tipo === "GASTO_CRUZADO_NEGOCIO_PAGA_SOCIO";
     const usaCat = tipo === "GASTO_PERSONAL" || tipo === "APORTE_SOBRE" || tipo === "GASTO_CRUZADO_NEGOCIO_PAGA_SOCIO";
@@ -1320,18 +1303,19 @@
       tipo_movimiento: tipo,
       categoria_codigo: usaCat ? categoria : null,
       concepto,
-      moneda_origen: moneda,
-      monto_origen: montoOrigen,
+      moneda_origen: "USD",
+      monto_origen: usdEquiv,
       tasa_bcv: bcv,
       tasa_binance: binance,
-      monto_usd_bcv: usdBcv,
-      monto_usd_real: usdReal,
-      ahorro_cambiario_usd: ahorro,
+      monto_usd_bcv: usdEquiv,
+      monto_usd_real: usdEquiv,
+      ahorro_cambiario_usd: 0,
       tiene_factura_fiscal: tieneFactura,
       aplica_desgravamen_islr: aplicaDesgravamen,
       es_gasto_hormiga: esHormiga,
       es_bolsillo_cruzado: esCruce,
-      entidad_pagadora_cruce: esCruce ? (tipo === "GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO" ? "PERSONAL" : entidadCruce) : null
+      entidad_pagadora_cruce: esCruce ? (tipo === "GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO" ? "PERSONAL" : entidadCruce) : null,
+      estado_conciliacion: "CONFIRMADO"
     };
 
     let crucePayload = null;
@@ -1585,15 +1569,15 @@
     stripEl.innerHTML = `
       <div style="background:#0f172a; border:1px solid var(--border); padding:10px 12px; border-radius:10px;">
         <div style="font-size:10.5px; color:#94a3b8; font-weight:700;">TOPE MENSUAL (${nombreMes.toUpperCase()})</div>
-        <div style="font-size:17px; font-weight:800; color:#f8fafc; margin-top:2px;">${fmtUSD(presupuestoTopeUsd)}</div>
+        <div style="font-size:17px; font-weight:800; color:#f8fafc; margin-top:2px;">${fmtUSD(presupuestoTopeUsd)} USD</div>
       </div>
       <div style="background:#0f172a; border:1px solid var(--border); padding:10px 12px; border-radius:10px;">
         <div style="font-size:10.5px; color:#94a3b8; font-weight:700;">EJECUTADO EN EL PERIODO</div>
-        <div style="font-size:17px; font-weight:800; color:#38bdf8; margin-top:2px;">${fmtUSD(totalGastadoUsd)} <span style="font-size:11px; color:#94a3b8;">(${fmtUSD(totalGastadoUsdt)} USDT)</span></div>
+        <div style="font-size:17px; font-weight:800; color:#38bdf8; margin-top:2px;">${fmtUSD(totalGastadoUsd)} USD</div>
       </div>
       <div style="background:#0f172a; border:1px solid var(--border); padding:10px 12px; border-radius:10px;">
         <div style="font-size:10.5px; color:#94a3b8; font-weight:700;">RESTANTE DEL MES</div>
-        <div style="font-size:17px; font-weight:800; color:#34d399; margin-top:2px;">${fmtUSD(restanteUsd)} <span style="font-size:11px; color:#94a3b8;">(${fmtVES(restanteUsd * bcv)})</span></div>
+        <div style="font-size:17px; font-weight:800; color:#34d399; margin-top:2px;">${fmtUSD(restanteUsd)} USD</div>
       </div>
       <div style="background:#0f172a; border:1px solid var(--border); padding:10px 12px; border-radius:10px;">
         <div style="font-size:10.5px; color:#94a3b8; font-weight:700;">ESTADO DE CONCILIACIÓN</div>
@@ -1604,7 +1588,7 @@
     if (txsPeriodo.length === 0) {
       tbodyEl.innerHTML = `
         <tr>
-          <td colspan="7" style="text-align:center; padding:28px 16px; color:#94a3b8;">
+          <td colspan="6" style="text-align:center; padding:28px 16px; color:#94a3b8;">
             <div style="font-size:14px; font-weight:700; color:#e2e8f0; margin-bottom:6px;">
               📭 No hay transacciones registradas en esta categoría durante ${nombreMes}.
             </div>
@@ -1623,10 +1607,7 @@
         const selectId = `select-move-cat-${idx}`;
         const estaConfirmado = tx.estado_conciliacion === "CONFIRMADO";
         const catActualObj = state.categorias.find(c => c.codigo === tx.categoria_codigo);
-        const montoOrigenStr = tx.moneda_origen === "VES"
-          ? fmtVES(tx.monto_origen)
-          : `${fmtUSD(tx.monto_origen)} (${tx.moneda_origen})`;
-        const montoUsdStr = fmtUSD(tx.monto_usd_bcv || tx.monto_usd_real || 0);
+        const montoUsdStr = fmtUSD(tx.monto_usd_bcv || tx.monto_usd_real || tx.monto_origen || 0);
 
         const opcionesCategorias = state.categorias.map(c =>
           `<option value="${c.codigo}" ${c.codigo === tx.categoria_codigo ? "selected" : ""}>${c.icono || "📌"} ${c.nombre}</option>`
@@ -1643,10 +1624,8 @@
                 Actual: <span style="color:#7dd3fc; font-weight:700;">${catActualObj ? `${catActualObj.icono} ${catActualObj.nombre}` : tx.categoria_codigo}</span>
               </div>
             </td>
-            <td style="font-weight:700; white-space:nowrap;">${montoOrigenStr}</td>
-            <td style="font-weight:800; color:#38bdf8; white-space:nowrap;">
-              ${montoUsdStr}
-              <div style="font-size:10.5px; color:#94a3b8; font-weight:500;">${fmtUSD(tx.monto_usd_real)} USDT</div>
+            <td style="font-weight:800; font-size:15px; color:#34d399; white-space:nowrap;">
+              ${montoUsdStr} USD
             </td>
             <td>
               ${estaConfirmado

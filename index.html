@@ -466,10 +466,8 @@
                 <th>Bolsillo / Entidad</th>
                 <th>Tipo de Movimiento</th>
                 <th>Concepto &amp; Categoría</th>
-                <th>Monto Origen</th>
-                <th>Equiv. BCV ($ USD)</th>
-                <th>Costo Real USDT ($)</th>
-                <th>Ahorro Cambiario</th>
+                <th>Monto Equivalente ($ USD)</th>
+                <th>Estado</th>
                 <th>Soporte Fiscal / Cruce</th>
               </tr>
             </thead>
@@ -642,23 +640,23 @@
 
         <div class="form-grid">
           <div class="form-group">
-            <label for="mov-moneda">Moneda Utilizada en el Pago</label>
+            <label for="mov-moneda">Moneda del Comprobante (Se guarda en Equivalente USD)</label>
             <select id="mov-moneda" class="form-control" onchange="window.previsualizarConversionModal()">
-              <option value="VES">🇻🇪 Bolívares (VES - Pago Móvil / Punto / Transferencia)</option>
-              <option value="USDT">💎 USDT (Binance Pay / Cripto)</option>
-              <option value="USD_CASH">💵 Dólares Efectivo (USD Cash)</option>
-              <option value="USD_ZELLE">🏦 Zelle / Divisas Internacional</option>
+              <option value="USD_CASH" selected>💵 Dólares ($ USD Directo)</option>
+              <option value="USDT">💎 USDT (Binance / Digital USD)</option>
+              <option value="USD_ZELLE">🏦 Zelle / Divisas USD</option>
+              <option value="VES">🇻🇪 Bolívares (Se convierte automáticamente a $ USD)</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="mov-monto">Monto Exacto Pagado (en Moneda Origen)</label>
-            <input type="number" id="mov-monto" class="form-control" step="0.01" min="0.01" placeholder="Ej: 35000 o 45.00" required oninput="window.previsualizarConversionModal()">
+            <label for="mov-monto">Monto ($ USD o Bs a convertir)</label>
+            <input type="number" id="mov-monto" class="form-control" step="0.01" min="0.01" placeholder="Ej: 96.70" required oninput="window.previsualizarConversionModal()">
           </div>
         </div>
 
-        <!-- Previsualización en Vivo del Motor Bimonetario -->
+        <!-- Previsualización en Vivo del Equivalente USD -->
         <div id="mov-preview-bimonetario" style="background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 14px; font-size: 12.5px;">
-          Ingresa un monto para calcular su equivalencia a Tasa BCV y en USDT reales.
+          Todo movimiento se registra unificado en su <strong>Equivalente en USD ($)</strong>.
         </div>
 
         <!-- Checks Fiscales y de Control Personal -->
@@ -708,8 +706,7 @@
             <tr>
               <th>Día / Fecha</th>
               <th>Concepto / Detalle del Gasto</th>
-              <th>Monto Pagado</th>
-              <th>Equiv. USD</th>
+              <th>Monto Equivalente ($ USD)</th>
               <th>Estado</th>
               <th>Mover a otra Categoría / Bolsillo</th>
               <th>Acciones</th>

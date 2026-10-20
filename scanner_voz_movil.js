@@ -100,9 +100,9 @@
       aplicarDatosAlFormularioMovil(extraido, "OCR");
 
       if (extraido.monto > 0) {
-        const msgExito = `Factura leída: ${extraido.monto.toLocaleString("es-VE")} ${extraido.moneda === "VES" ? "bolívares" : "dólares"}. Clasificado en ${obtenerNombreAmigableDestino(extraido)}. Puedes tocar el micrófono para dar otra instrucción.`;
+        const msgExito = `Factura leída: ${extraido.monto.toLocaleString("en-US", { minimumFractionDigits: 2 })} dólares en ${obtenerNombreAmigableDestino(extraido)}.`;
         if (statusEl) {
-          statusEl.innerHTML = `<span style="color:#34d399;">✅ <strong>Monto detectado: ${extraido.moneda === "VES" ? "Bs " : "$"}${extraido.monto.toLocaleString("es-VE", { minimumFractionDigits: 2 })}</strong> (${extraido.comercioDetectado || "Factura"}). Ahora puedes dictar por voz a dónde pertenece si deseas cambiarlo.</span>`;
+          statusEl.innerHTML = `<span style="color:#34d399;">✅ <strong>Equivalente USD detectado: $${extraido.monto.toLocaleString("en-US", { minimumFractionDigits: 2 })} USD</strong> (${extraido.comercioDetectado || "Factura"}). Ahora puedes dictar por voz a dónde pertenece si deseas cambiarlo.</span>`;
         }
         hablarConfirmacion(msgExito);
       } else {
@@ -181,22 +181,9 @@
     const facMatch = limpio.match(/(?:factura|control|recibo|ref|referencia|nro|n°)\s*[:#\-]?\s*([A-Z0-9\-]{4,18})/i);
     const numFactura = facMatch ? facMatch[1].toUpperCase() : "";
 
-    // 3. Detectar Moneda predominante
-    let moneda = "VES";
-    if (lower.includes("usdt") || lower.includes("binance")) {
-      moneda = "USDT";
-    } else if (
-      (lower.includes("usd") || lower.includes("zelle") || lower.includes("efectivo $")) &&
-      !lower.includes("bs") &&
-      !lower.includes("ves") &&
-      !lower.includes("bolivares")
-    ) {
-      moneda = "USD_CASH";
-    }
-
-    // 4. Extraer Monto Total:
-    // Prioridad A: Líneas que contienen TOTAL, PAGAR, MONTO, BS, USD, IMPORTE
+    // 3. Extraer Monto Total y convertir siempre a su Equivalente en USD ($):
     const lineas = limpio.split("\n").map(l => l.trim()).filter(Boolean);
+    let candidatosUsd = [];
     let candidatosPrioritarios = [];
     let candidatosGenerales = [];
 
@@ -204,35 +191,49 @@
 
     for (const linea of lineas) {
       const lLow = linea.toLowerCase();
-      // Evitar líneas que sean fechas, horas, teléfonos o RIF
       if (lLow.includes("rif") || lLow.includes("telf") || lLow.includes("fecha") || lLow.includes("hora")) continue;
 
-      const EsLineaTotal = /(?:total|pagar|pagado|monto|importe|venta|neto|bs\.?|ves|usd|usdt|\$)/i.test(linea);
+      const tieneIndicadorUsd = /(?:usd|us\$|\$|divisa|ref|dolar|dólar|usdt)/i.test(linea);
+      const EsLineaTotal = /(?:total|pagar|pagado|monto|importe|venta|neto|bs\.?|ves|usd|usdt|\$|ref)/i.test(linea);
       let m;
       while ((m = regexNumeroMonetario.exec(linea)) !== null) {
         const valor = normalizarNumeroVenezolano(m[1]);
-        // Filtrar años (2024-2029) o porcentajes como 16.00 si hay montos mayores
         if (valor > 0 && valor < 10000000) {
+          if (tieneIndicadorUsd && valor < 50000) candidatosUsd.push(valor);
           if (EsLineaTotal) candidatosPrioritarios.push(valor);
           candidatosGenerales.push(valor);
         }
       }
     }
 
-    let montoDetectado = 0;
-    if (candidatosPrioritarios.length > 0) {
-      // En una factura, el TOTAL suele ser el número mayor entre las líneas de total/subtotal/iva
-      montoDetectado = Math.max(...candidatosPrioritarios);
-    } else if (candidatosGenerales.length > 0) {
-      montoDetectado = Math.max(...candidatosGenerales);
+    const tasaBcv = Number(document.getElementById("mobile-tasa-bcv")?.value) || window.FINANZAS_STATE?.tasas?.tasa_bcv || 875;
+    let montoUsdEquivalente = 0;
+
+    if (candidatosUsd.length > 0) {
+      // Si la factura indica explícitamente USD / $ / REF, tomamos el monto en USD directo
+      montoUsdEquivalente = Math.max(...candidatosUsd);
+    } else {
+      let rawMax = 0;
+      if (candidatosPrioritarios.length > 0) {
+        rawMax = Math.max(...candidatosPrioritarios);
+      } else if (candidatosGenerales.length > 0) {
+        rawMax = Math.max(...candidatosGenerales);
+      }
+      // Si el monto leído es mayor a 1.200 y el texto menciona Bs/Bolívares (y no USD), lo convertimos a su Equivalente USD
+      const mencionaUsdGlobal = /(?:usd|us\$|\$|divisa|zelle|usdt)/i.test(limpio);
+      if (rawMax > 1200 && !mencionaUsdGlobal && tasaBcv > 0) {
+        montoUsdEquivalente = Number((rawMax / tasaBcv).toFixed(2));
+      } else {
+        montoUsdEquivalente = Number(rawMax.toFixed(2));
+      }
     }
 
-    // 5. Clasificar comercio y destino automáticamente
+    // 4. Clasificar comercio y destino automáticamente
     const clasificacion = interpretarIntencionFinanciera(limpio);
 
     return {
-      monto: montoDetectado,
-      moneda: clasificacion.monedaExplicita || moneda,
+      monto: montoUsdEquivalente,
+      moneda: "USD_CASH",
       rif,
       numFactura,
       entidad: clasificacion.entidad,
@@ -751,19 +752,10 @@
       }
 
       convBox.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-          <span style="color:#94a3b8; font-size:12px;">Equivalente Factura BCV (${bcv} Bs/$):</span>
-          <strong style="font-size:16px; color:#f8fafc;">$${usdBcv.toFixed(2)} USD</strong>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:#94a3b8; font-size:12.5px; font-weight:700;">💵 Monto Equivalente a Guardar en USD:</span>
+          <strong style="font-size:18px; color:#34d399;">$${usdBcv.toFixed(2)} USD</strong>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-          <span style="color:#94a3b8; font-size:12px;">Costo Real en USDT (${binance} Bs/USDT):</span>
-          <strong style="font-size:15px; color:#38bdf8;">$${usdReal.toFixed(2)} USDT</strong>
-        </div>
-        ${ahorro > 0 ? `
-        <div style="display:flex; justify-content:space-between; align-items:center; color:#34d399; font-size:12px; font-weight:700;">
-          <span>✨ Ahorro Cambiario por pagar en Bs:</span>
-          <span>+$${ahorro.toFixed(2)} USD</span>
-        </div>` : ""}
         ${infoPresupuesto}
       `;
     }
@@ -818,9 +810,7 @@
     const tieneFactura = Boolean(document.getElementById("scan-factura-fiscal")?.checked);
     const aplicaDesgravamen = Boolean(document.getElementById("scan-desgravamen-islr")?.checked);
 
-    const usdBcv = moneda === "VES" ? Number((monto / bcv).toFixed(2)) : Number(monto.toFixed(2));
-    const usdReal = moneda === "VES" ? Number((monto / binance).toFixed(2)) : Number(monto.toFixed(2));
-    const ahorro = moneda === "VES" ? Number(Math.max(0, usdBcv - usdReal).toFixed(2)) : 0;
+    const usdEquiv = moneda === "VES" ? Number((monto / bcv).toFixed(2)) : Number(monto.toFixed(2));
 
     const esCruce = tipoMov === "GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO" || tipoMov === "GASTO_CRUZADO_NEGOCIO_PAGA_SOCIO";
 
@@ -830,18 +820,19 @@
       tipo_movimiento: tipoMov,
       categoria_codigo: entidad === "PERSONAL" ? categoria : null,
       concepto,
-      moneda_origen: moneda,
-      monto_origen: monto,
+      moneda_origen: "USD",
+      monto_origen: usdEquiv,
       tasa_bcv: bcv,
       tasa_binance: binance,
-      monto_usd_bcv: usdBcv,
-      monto_usd_real: usdReal,
-      ahorro_cambiario_usd: ahorro,
+      monto_usd_bcv: usdEquiv,
+      monto_usd_real: usdEquiv,
+      ahorro_cambiario_usd: 0,
       tiene_factura_fiscal: tieneFactura,
       aplica_desgravamen_islr: aplicaDesgravamen,
-      es_gasto_hormiga: (entidad === "PERSONAL" && usdReal < 10),
+      es_gasto_hormiga: (entidad === "PERSONAL" && usdEquiv < 10),
       es_bolsillo_cruzado: esCruce,
-      entidad_pagadora_cruce: esCruce ? (tipoMov === "GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO" ? "PERSONAL" : entidad) : null
+      entidad_pagadora_cruce: esCruce ? (tipoMov === "GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO" ? "PERSONAL" : entidad) : null,
+      estado_conciliacion: "CONFIRMADO"
     };
 
     let crucePayload = null;
@@ -853,8 +844,8 @@
         emprendimiento_codigo: empCodigo,
         direccion: tipoMov === "GASTO_CRUZADO_SOCIO_PAGA_NEGOCIO" ? "SOCIO_PRESTA_A_NEGOCIO" : "NEGOCIO_ADELANTA_A_SOCIO",
         concepto,
-        monto_usd_real: usdReal,
-        moneda_origen: moneda,
+        monto_usd_real: usdEquiv,
+        moneda_origen: "USD",
         estado: "PENDIENTE",
         notas: `Registrado desde Escáner Móvil por Voz/Cámara.`
       };
@@ -882,7 +873,7 @@
       btnSave.innerText = "✅ Guardar Gasto en Supabase Cloud";
     }
 
-    hablarConfirmacion(`Gasto guardado exitosamente por ${usdBcv} dólares.`);
+    hablarConfirmacion(`Gasto guardado exitosamente por ${usdEquiv} dólares.`);
 
     // Limpiar monto y concepto para la siguiente factura
     document.getElementById("scan-monto").value = "";
@@ -907,9 +898,7 @@
     }
 
     container.innerHTML = lista.map(tx => {
-      const montoStr = tx.moneda_origen === "VES"
-        ? `Bs ${Number(tx.monto_origen).toLocaleString("es-VE", { minimumFractionDigits: 2 })}`
-        : `$${Number(tx.monto_origen).toFixed(2)} ${tx.moneda_origen}`;
+      const montoUsd = Number(tx.monto_usd_bcv || tx.monto_usd_real || tx.monto_origen || 0);
 
       return `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:#0f172a; border:1px solid rgba(255,255,255,0.07); border-radius:10px; margin-bottom:8px;">
@@ -918,8 +907,7 @@
             <div style="font-size:11px; color:#94a3b8;">${tx.fecha} &bull; <strong style="color:#38bdf8;">${tx.categoria_codigo || tx.entidad_codigo}</strong></div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:13.5px; font-weight:800; color:#34d399;">$${Number(tx.monto_usd_bcv).toFixed(2)} BCV</div>
-            <div style="font-size:11px; color:#cbd5e1;">${montoStr}</div>
+            <div style="font-size:14px; font-weight:800; color:#34d399;">$${montoUsd.toFixed(2)} USD</div>
           </div>
         </div>
       `;

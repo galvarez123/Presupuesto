@@ -301,19 +301,19 @@
         3️⃣ Paso 3: Confirma Monto y Categoría Asignada
       </div>
 
-      <!-- Monto Grande y Moneda -->
+      <!-- Monto Grande y Moneda (Todo en Equivalente USD) -->
       <div style="display:grid; grid-template-columns: 1.3fr 1fr; gap:8px; margin-bottom:12px;">
         <div>
-          <label style="font-size:11px; color:#94a3b8; font-weight:700; display:block; margin-bottom:4px;">MONTO RECONOCIDO:</label>
+          <label style="font-size:11px; color:#94a3b8; font-weight:700; display:block; margin-bottom:4px;">MONTO ($ USD O BS):</label>
           <input type="number" id="scan-monto" class="form-control big-amount-input" step="0.01" min="0.01" placeholder="0.00" required oninput="window.actualizarUIFromControlesMovil()">
         </div>
         <div>
-          <label style="font-size:11px; color:#94a3b8; font-weight:700; display:block; margin-bottom:4px;">MONEDA:</label>
+          <label style="font-size:11px; color:#94a3b8; font-weight:700; display:block; margin-bottom:4px;">MONEDA LEÍDA:</label>
           <select id="scan-moneda" class="form-control" style="height:56px; font-size:15px; font-weight:800;" onchange="window.actualizarUIFromControlesMovil()">
-            <option value="VES">🇻🇪 Bs (VES)</option>
-            <option value="USD_CASH">💵 USD Efectivo</option>
+            <option value="USD_CASH" selected>💵 $ USD (Directo)</option>
             <option value="USDT">💎 USDT Binance</option>
             <option value="USD_ZELLE">🏦 Zelle USD</option>
+            <option value="VES">🇻🇪 Bs (Convertir a USD)</option>
           </select>
         </div>
       </div>
